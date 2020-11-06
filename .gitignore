@@ -21,4 +21,4 @@
 .idea/
 
 pkg/*
-polytech.sacc.onfine/target/*
+*/target/
