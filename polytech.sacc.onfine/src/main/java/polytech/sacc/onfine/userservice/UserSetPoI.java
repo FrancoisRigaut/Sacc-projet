@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-@WebServlet(name = "UserSetPoI", value = "/ws/user/set-poi")
+@WebServlet(name = "UserSetPoI", value = "/user/set-poi")
 public class UserSetPoI extends HttpServlet {
 
     @Override

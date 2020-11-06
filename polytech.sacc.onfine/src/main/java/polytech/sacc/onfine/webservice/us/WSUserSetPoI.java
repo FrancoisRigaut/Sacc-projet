@@ -19,8 +19,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-@WebServlet(name = "UserSetPoI", value = "/ws/user/setpoi")
-public class UserSetPoI extends HttpServlet {
+@WebServlet(name = "WSUserSetPoI", value = "/ws/user/set-poi")
+public class WSUserSetPoI extends HttpServlet {
 
     @Override
     public void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -29,7 +29,7 @@ public class UserSetPoI extends HttpServlet {
         Properties properties = System.getProperties();
 
         response.setContentType("text/plain");
-        response.getWriter().println("UserSetPoI - Web Service "
+        response.getWriter().println("WSUserSetPoI - Web Service "
                 + SystemProperty.version.get() + " Java " + properties.get("java.specification.version"));
     }
 
