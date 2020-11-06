@@ -11,14 +11,14 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.stream.Collectors;
 
-@WebServlet(name = "UserSetPoI", value = "/user/set-poi")
-public class UserSetPoI extends HttpServlet {
+@WebServlet(name = "UserRegister", value = "/user/register")
+public class UserRegister extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         JsonObject jsonObject = new Gson().fromJson(req.getReader().lines().collect(Collectors.joining(System.lineSeparator())), JsonObject.class);
-        String sha1 = jsonObject.get("sha1").getAsString();
+        String phone = jsonObject.get("phone").getAsString();
         //TODO do you bail
-        resp.setStatus(HttpServletResponse.SC_OK);
+        resp.setStatus(HttpServletResponse.SC_CREATED);
         resp.getWriter().print("Ok");
     }
 
