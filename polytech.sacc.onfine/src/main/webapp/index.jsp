@@ -6,7 +6,7 @@
   <title>Hello App Engine Standard Java 8</title>
 </head>
 <body>
-    <h1>Hello App Engine -- Java 8 -- Projet Sacc!</h1>
+    <h1>Java 8 -- Projet Sacc!</h1>
 
   <table>
     <tr>

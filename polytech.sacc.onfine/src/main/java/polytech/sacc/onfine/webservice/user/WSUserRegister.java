@@ -1,4 +1,4 @@
-package polytech.sacc.onfine.webservice.us;
+package polytech.sacc.onfine.webservice.user;
 
 import com.google.appengine.repackaged.com.google.gson.Gson;
 import com.google.appengine.repackaged.com.google.gson.JsonObject;
@@ -13,21 +13,20 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
-@WebServlet(name = "WSUserSetPoI", value = "/ws/user/set-poi")
-public class WSUserSetPoI extends HttpServlet {
+@WebServlet(name = "WSUserRegister", value = "/ws/user/register")
+public class WSUserRegister extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         JsonObject jsonObject = new Gson().fromJson(req.getReader().lines().collect(Collectors.joining(System.lineSeparator())), JsonObject.class);
-
-
         try{
-            if(!jsonObject.has("sha1"))
-                throw new MissingArgumentException("sha1");
+            if(!jsonObject.has("phone"))
+                throw new MissingArgumentException("phone");
 
-            String res = Utils.makePostRequest(Utils.getCurrentUrl() + "/user/set-poi",
-                    jsonObject.toString().getBytes(StandardCharsets.UTF_8));
-            //TODO handler response
-            resp.setStatus(HttpServletResponse.SC_OK);
+            String res = Utils.makeRequest(Utils.getCurrentUrl() + "/user/register",
+                    jsonObject.toString().getBytes(StandardCharsets.UTF_8),
+                    Utils.RequestType.POST);
+            //TODO handle response
+            resp.setStatus(HttpServletResponse.SC_CREATED);
             resp.getWriter().print(res);
         }catch (Exception e){
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
@@ -35,4 +34,3 @@ public class WSUserSetPoI extends HttpServlet {
         }
     }
 }
-

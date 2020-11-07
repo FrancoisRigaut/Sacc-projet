@@ -1,7 +1,7 @@
-package polytech.sacc.onfine.userservice;
+package polytech.sacc.onfine.services.meeting;
 
 import com.google.appengine.repackaged.com.google.gson.Gson;
-import com.google.appengine.repackaged.com.google.gson.JsonObject;
+import polytech.sacc.onfine.entity.Meeting;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -11,17 +11,16 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.stream.Collectors;
 
-@WebServlet(name = "AdminRegister", value = "/admin/register")
-public class AdminRegister extends HttpServlet {
+@WebServlet(name = "MeetingRegister", value = "/meeting/register")
+public class MeetingRegister extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        JsonObject jsonObject = new Gson().fromJson(req.getReader().lines().collect(Collectors.joining(System.lineSeparator())), JsonObject.class);
-        String email = jsonObject.get("email").getAsString();
+        Meeting meeting = new Gson().fromJson(req.getReader().lines().collect(Collectors.joining(System.lineSeparator())), Meeting.class);
+        System.out.println(meeting);
         //TODO do you bail
         resp.setStatus(HttpServletResponse.SC_CREATED);
         resp.getWriter().print("Ok");
     }
-
 }
 
 

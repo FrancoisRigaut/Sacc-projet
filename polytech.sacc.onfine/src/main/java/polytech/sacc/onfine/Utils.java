@@ -11,24 +11,39 @@ import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 
 public abstract class Utils {
+    public enum RequestType{
+        POST("POST"),
+        PUT("PUT");
+
+        private final String type;
+
+        RequestType(String type) {
+            this.type = type;
+        }
+
+        public String getType() {
+            return type;
+        }
+    }
+
     public static String getCurrentUrl(){
         String hostUrl;
         String environment = System.getProperty("com.google.appengine.runtime.environment");
         if (StringUtils.equals("Production", environment)) {
             String applicationId = System.getProperty("com.google.appengine.application.id");
             String version = System.getProperty("com.google.appengine.application.version");
-            hostUrl = "http://"+version+"."+applicationId+".appspot.com/";
+            hostUrl = "http://"+version+"."+applicationId+".appspot.com";
         } else {
             hostUrl = "http://localhost:8080";
         }
         return hostUrl;
     }
 
-    public static String makePostRequest(String urlString, byte[] bytes) throws Exception{
+    public static String makeRequest(String urlString, byte[] bytes, RequestType type) throws Exception{
         URL url = new URL(urlString);
         URLConnection con = url.openConnection();
         HttpURLConnection http = (HttpURLConnection)con;
-        http.setRequestMethod("GET");
+        http.setRequestMethod(type.type);
         http.setDoOutput(true);
 
         int length = bytes.length;
@@ -39,6 +54,29 @@ public abstract class Utils {
         try(OutputStream os = http.getOutputStream()) {
             os.write(bytes);
         }
+
+        try(BufferedReader br = new BufferedReader(
+                new InputStreamReader(http.getInputStream(), StandardCharsets.UTF_8))) {
+            StringBuilder response = new StringBuilder();
+            String responseLine;
+            while ((responseLine = br.readLine()) != null) {
+                response.append(responseLine.trim());
+            }
+            return response.toString();
+        }
+    }
+
+    //TODO not test donc je sais pas si ca marche
+    public static String makeGetRequest(String urlString) throws Exception{
+        URL url = new URL(urlString);
+        URLConnection con = url.openConnection();
+        HttpURLConnection http = (HttpURLConnection)con;
+        http.setRequestMethod("GET");
+        http.setDoOutput(true);
+
+        http.setFixedLengthStreamingMode(urlString.getBytes().length);
+        http.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
+        http.connect();
 
         try(BufferedReader br = new BufferedReader(
                 new InputStreamReader(http.getInputStream(), StandardCharsets.UTF_8))) {

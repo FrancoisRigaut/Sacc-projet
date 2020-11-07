@@ -1,4 +1,4 @@
-package polytech.sacc.onfine.webservice.us;
+package polytech.sacc.onfine.webservice.user;
 
 import com.google.appengine.repackaged.com.google.gson.Gson;
 import com.google.appengine.repackaged.com.google.gson.JsonObject;
@@ -13,20 +13,19 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
-@WebServlet(name = "WSUserRegister", value = "/ws/user/register")
-public class WSUserRegister extends HttpServlet {
+@WebServlet(name = "WSAdminRegister", value = "/ws/admin/register")
+public class WSAdminRegister extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         JsonObject jsonObject = new Gson().fromJson(req.getReader().lines().collect(Collectors.joining(System.lineSeparator())), JsonObject.class);
-
-
         try{
-            if(!jsonObject.has("phone"))
-                throw new MissingArgumentException("phone");
+            if(!jsonObject.has("email"))
+                throw new MissingArgumentException("email");
 
-            String res = Utils.makePostRequest(Utils.getCurrentUrl() + "/user/register",
-                    jsonObject.toString().getBytes(StandardCharsets.UTF_8));
-            //TODO handler response
+            String res = Utils.makeRequest(Utils.getCurrentUrl() + "/admin/register",
+                    jsonObject.toString().getBytes(StandardCharsets.UTF_8),
+                    Utils.RequestType.POST);
+            //TODO handle response
             resp.setStatus(HttpServletResponse.SC_CREATED);
             resp.getWriter().print(res);
         }catch (Exception e){
