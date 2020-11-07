@@ -11,6 +11,9 @@ import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 
 public abstract class Utils {
+    public static final String PROJECT_ID = "sacc-onfine";
+    public static final String PROJECT_LOCATION = "europe-west1";
+
     public enum RequestType{
         POST("POST"),
         PUT("PUT");

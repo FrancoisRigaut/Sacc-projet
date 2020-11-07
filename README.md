@@ -13,7 +13,8 @@
 Launch the google cloud console then launch the following commands
 - Init gcloud `gcloud init`
 - Create the project `gcloud projects create sacc-onfine`
-  - If you were on an other project : `gcloud config set project sacc-onfine`
+  - If you were on another project type `gcloud config set project sacc-onfine`
+- You can check that the project is selected by typing `gcloud config get-value project`
 - Create the app in the project `gcloud app create` then choose `europe-west`
 - Install java component `gcloud components install app-engine-java`
 - Create maven base app `mvn archetype:generate -Dappengine-version=1.9.82 -Dapplication-id=sacc-onfine -Dfilter=com.google.appengine.archetypes:appengine-standard-archetype`
@@ -23,6 +24,15 @@ Launch the google cloud console then launch the following commands
   - package: `polytech.sacc.onfine`
 
 Do not forget to `mvn clean install` the first time
+
+## Creating task and queue
+
+To allow using task you need to set the env credentials var. Type `set GOOGLE_APPLICATION_CREDENTIALS=C:\dev\courses\Sacc-projet\sacc-onfine-dc042eb66eba.json`
+  - If you are running server with intelliJ, you need to set the configuration env var in Edit Configurations >  Startup Connection
+
+To create a task follow the steps
+- `gcloud tasks queues create TASK_NAME
+- Wait few minutes and then `gcloud tasks queues describe TASK_NAME` to check if the task is up
 
 ## How to use
 
