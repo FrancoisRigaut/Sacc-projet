@@ -23,11 +23,11 @@ public class WSDataServiceUser extends HttpServlet {
             switch (parsing[2]) {
                 case "count":
                 case "count-poi":
-                    handleFastStatsCalculation(resp, requestURL);
+                    handleFastStatsCalculation(resp, "/" + requestURL);
                     break;
                 case "count-position-updates":
                 case "contacted-poi":
-                    handleLongStatsCalculation(resp, requestURL);
+                    handleLongStatsCalculation(resp, "/" + requestURL);
                     break;
                 default:
                     throw new WrongArgumentException(parsing[2]);
