@@ -11,8 +11,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.stream.Collectors;
 
-@WebServlet(name = "MeetingRegister", value = "/meeting/register")
-public class MeetingRegister extends HttpServlet {
+@WebServlet(name = "MeetingService", value = "/meeting/register")
+public class MeetingService extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         Meeting meeting = new Gson().fromJson(req.getReader().lines().collect(Collectors.joining(System.lineSeparator())), Meeting.class);

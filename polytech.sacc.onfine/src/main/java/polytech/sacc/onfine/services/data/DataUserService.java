@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 @WebServlet(name = "DataServiceUser", value = "/stats/users/*")
-public class DataServiceUser extends HttpServlet {
+public class DataUserService extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String requestURL = req.getRequestURL().toString().replace(Utils.getCurrentUrl() + "/", "");
