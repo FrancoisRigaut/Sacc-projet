@@ -25,6 +25,8 @@ Launch the google cloud console then launch the following commands
 
 Do not forget to `mvn clean install` the first time
 
+Pour déployer et pomper les crédits de Damien : `mvn package appengine:deploy -Dapp.deploy.projectId=sacc-onfine`
+
 ## Creating task and queue
 
 To allow using task you need to set the env credentials var. Type `set GOOGLE_APPLICATION_CREDENTIALS=C:\dev\courses\Sacc-projet\sacc-onfine-dc042eb66eba.json`
