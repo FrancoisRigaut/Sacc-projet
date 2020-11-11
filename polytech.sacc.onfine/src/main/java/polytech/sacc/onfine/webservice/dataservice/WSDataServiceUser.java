@@ -18,16 +18,15 @@ public class WSDataServiceUser extends HttpServlet {
         String requestURL = req.getRequestURL().toString().replace(Utils.getCurrentUrl() + "/ws/", "");
         // if you have http://localhost:8080/ws/stats/users/count this will result to stats/users/count
         String[] parsing = requestURL.split("/");
-
         try {
             switch (parsing[2]) {
                 case "count":
                 case "count-poi":
-                    handleFastStatsCalculation(resp, "/" + requestURL);
+                    handleFastStatsCalculation(resp, "/" + requestURL + "?" + req.getQueryString());
                     break;
                 case "count-position-updates":
                 case "contacted-poi":
-                    handleLongStatsCalculation(resp, "/" + requestURL);
+                    handleLongStatsCalculation(resp, "/" + requestURL + "?" + req.getQueryString());
                     break;
                 default:
                     throw new WrongArgumentException(parsing[2]);
