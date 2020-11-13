@@ -1,5 +1,8 @@
 package polytech.sacc.onfine.services.data;
 
+import com.google.cloud.datastore.Datastore;
+import com.google.cloud.datastore.DatastoreOptions;
+import com.google.cloud.datastore.QueryResults;
 import polytech.sacc.onfine.utils.NetUtils;
 import polytech.sacc.onfine.utils.SqlUtils;
 import com.google.appengine.api.datastore.*;
@@ -113,20 +116,23 @@ public class DataUserService extends HttpServlet {
     }
 
     private void handleDeleteAllData(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+        Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
 
-        // Delete NoSQL DBs
-        // Use PreparedQuery interface to retrieve results
-        PreparedQuery users = datastore.prepare(new Query("User"));
-        PreparedQuery meetings = datastore.prepare(new Query("Meeting"));
-
-        for (Entity result : users.asIterable()) {
-            resp.getWriter().println(result.toString());
-            datastore.delete(result.getKey());
+        com.google.cloud.datastore.Query<com.google.cloud.datastore.Entity> query = com.google.cloud.datastore.Query.newEntityQueryBuilder()
+                .setKind("User")
+                .build();
+        com.google.cloud.datastore.QueryResults<com.google.cloud.datastore.Entity> results = datastore.run(query);
+        while (results.hasNext()) {
+            com.google.cloud.datastore.Entity e = results.next();
+            datastore.delete(e.getKey());
         }
-        for (Entity result : meetings.asIterable()) {
-            resp.getWriter().println(result.toString());
-            datastore.delete(result.getKey());
+        com.google.cloud.datastore.Query<com.google.cloud.datastore.Entity> query2 = com.google.cloud.datastore.Query.newEntityQueryBuilder()
+                .setKind("Meeting")
+                .build();
+        com.google.cloud.datastore.QueryResults<com.google.cloud.datastore.Entity> results2 = datastore.run(query2);
+        while (results2.hasNext()) {
+            com.google.cloud.datastore.Entity e = results2.next();
+            datastore.delete(e.getKey());
         }
 
         SqlUtils.sqlReqAndRespBool(req, "TRUNCATE TABLE user_poi", new ArrayList<>(), resp);
