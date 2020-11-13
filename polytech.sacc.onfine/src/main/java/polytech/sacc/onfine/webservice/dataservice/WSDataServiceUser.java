@@ -1,31 +1,18 @@
 package polytech.sacc.onfine.webservice.dataservice;
 
-import com.google.appengine.api.datastore.DatastoreService;
-import com.google.appengine.api.datastore.DatastoreServiceFactory;
-import com.google.appengine.api.datastore.Entity;
-import com.google.appengine.api.datastore.PreparedQuery;
 import com.google.appengine.repackaged.com.google.gson.Gson;
 import com.google.appengine.repackaged.com.google.gson.JsonObject;
 import com.google.cloud.tasks.v2.*;
-import com.google.appengine.api.datastore.Query;
-import polytech.sacc.onfine.entity.Admin;
-import polytech.sacc.onfine.entity.exception.MissingArgumentException;
 import polytech.sacc.onfine.entity.exception.WrongArgumentException;
 import polytech.sacc.onfine.tools.Utils;
 import polytech.sacc.onfine.tools.UtilsResponse;
 
-import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.sql.DataSource;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.stream.Collectors;
 
 

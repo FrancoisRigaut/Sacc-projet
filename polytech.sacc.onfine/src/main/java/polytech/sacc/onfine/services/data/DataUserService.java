@@ -1,11 +1,8 @@
 package polytech.sacc.onfine.services.data;
 
-import com.google.cloud.datastore.Datastore;
-import com.google.cloud.datastore.DatastoreOptions;
-import com.google.cloud.datastore.QueryResults;
+import com.google.cloud.datastore.*;
 import polytech.sacc.onfine.utils.NetUtils;
 import polytech.sacc.onfine.utils.SqlUtils;
-import com.google.appengine.api.datastore.*;
 import polytech.sacc.onfine.tools.Utils;
 import polytech.sacc.onfine.entity.Admin;
 import polytech.sacc.onfine.entity.exception.MissingArgumentException;
@@ -118,10 +115,10 @@ public class DataUserService extends HttpServlet {
     private void handleDeleteAllData(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
 
-        com.google.cloud.datastore.Query<com.google.cloud.datastore.Entity> query = com.google.cloud.datastore.Query.newEntityQueryBuilder()
+        Query<Entity> query = Query.newEntityQueryBuilder()
                 .setKind("User")
                 .build();
-        com.google.cloud.datastore.QueryResults<com.google.cloud.datastore.Entity> results = datastore.run(query);
+        QueryResults<Entity> results = datastore.run(query);
         while (results.hasNext()) {
             com.google.cloud.datastore.Entity e = results.next();
             datastore.delete(e.getKey());
