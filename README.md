@@ -6,7 +6,7 @@
 - Masia Sylvain
 - Montoya Damien
 - Rigaut François
-- Richard Peres
+- Peres Richard
 
 # Using project
 
@@ -37,7 +37,7 @@ Pour déployer et pomper les crédits de Damien : `mvn package appengine:deploy 
 
 ## Creating task and queue
 
-To allow using task you need to set the env credentials var. Type `set GOOGLE_APPLICATION_CREDENTIALS=C:\dev\courses\Sacc-projet\sacc-onfine-dc042eb66eba.json`
+To allow using task you need to set the env credentials var. Type `set GOOGLE_APPLICATION_CREDENTIALS=PATH_TO\sacc-onfine-dc042eb66eba.json`
   - If you are running server with intelliJ, you need to set the configuration env var in Edit Configurations >  Startup Connection
 
 To create a task follow the steps

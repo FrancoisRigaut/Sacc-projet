@@ -1,4 +1,4 @@
-package polytech.sacc.onfine;
+package polytech.sacc.onfine.tools;
 
 import com.google.appengine.repackaged.org.apache.commons.codec.binary.StringUtils;
 
@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 public abstract class Utils {
     public static final String PROJECT_ID = "sacc-onfine";
     public static final String PROJECT_LOCATION = "europe-west1";
+    public static final String PG_POOL = "pg_pool";
 
     public enum RequestType{
         POST("POST"),
@@ -40,7 +41,7 @@ public abstract class Utils {
         return hostUrl;
     }
 
-    public static String makeRequest(String urlString, byte[] bytes, RequestType type) throws Exception{
+    public static UtilsResponse makeRequest(String urlString, byte[] bytes, RequestType type) throws Exception{
         URL url = new URL(urlString);
         URLConnection con = url.openConnection();
         HttpURLConnection http = (HttpURLConnection)con;
@@ -63,7 +64,17 @@ public abstract class Utils {
             while ((responseLine = br.readLine()) != null) {
                 response.append(responseLine.trim());
             }
-            return response.toString();
+            return new UtilsResponse(response.toString(), http.getResponseCode());
+        }catch (Exception e){
+            try(BufferedReader br = new BufferedReader(
+                    new InputStreamReader(http.getErrorStream(), StandardCharsets.UTF_8))) {
+                StringBuilder response = new StringBuilder();
+                String responseLine;
+                while ((responseLine = br.readLine()) != null) {
+                    response.append(responseLine.trim());
+                }
+                return new UtilsResponse(response.toString(), http.getResponseCode());
+            }
         }
     }
 

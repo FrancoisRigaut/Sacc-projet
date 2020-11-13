@@ -1,7 +1,7 @@
 package polytech.sacc.onfine.webservice.dataservice;
 
 import com.google.cloud.tasks.v2.*;
-import polytech.sacc.onfine.Utils;
+import polytech.sacc.onfine.tools.Utils;
 import polytech.sacc.onfine.entity.exception.WrongArgumentException;
 
 import javax.servlet.annotation.WebServlet;

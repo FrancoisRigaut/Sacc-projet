@@ -1,6 +1,6 @@
 package polytech.sacc.onfine.services.data;
 
-import polytech.sacc.onfine.Utils;
+import polytech.sacc.onfine.tools.Utils;
 import polytech.sacc.onfine.entity.Admin;
 import polytech.sacc.onfine.entity.exception.MissingArgumentException;
 import polytech.sacc.onfine.entity.exception.WrongArgumentException;

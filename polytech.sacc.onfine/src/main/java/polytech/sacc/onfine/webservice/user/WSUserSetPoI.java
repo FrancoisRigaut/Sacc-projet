@@ -2,8 +2,9 @@ package polytech.sacc.onfine.webservice.user;
 
 import com.google.appengine.repackaged.com.google.gson.Gson;
 import com.google.appengine.repackaged.com.google.gson.JsonObject;
-import polytech.sacc.onfine.Utils;
+import polytech.sacc.onfine.tools.Utils;
 import polytech.sacc.onfine.entity.exception.MissingArgumentException;
+import polytech.sacc.onfine.tools.UtilsResponse;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -22,12 +23,12 @@ public class WSUserSetPoI extends HttpServlet {
             if(!jsonObject.has("sha1"))
                 throw new MissingArgumentException("sha1");
 
-            String res = Utils.makeRequest(Utils.getCurrentUrl() + "/user/set-poi",
+            UtilsResponse res = Utils.makeRequest(Utils.getCurrentUrl() + "/user/set-poi",
                     jsonObject.toString().getBytes(StandardCharsets.UTF_8),
                     Utils.RequestType.PUT);
             //TODO handle response
-            resp.setStatus(HttpServletResponse.SC_OK);
-            resp.getWriter().print(res);
+            resp.setStatus(res.getResponseCode());
+            resp.getWriter().print(res.getResponse());
         }catch (Exception e){
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().print(e.getMessage());

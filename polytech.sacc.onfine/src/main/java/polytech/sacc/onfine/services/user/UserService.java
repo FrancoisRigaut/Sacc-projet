@@ -2,7 +2,7 @@ package polytech.sacc.onfine.services.user;
 
 import com.google.appengine.repackaged.com.google.gson.Gson;
 import com.google.appengine.repackaged.com.google.gson.JsonObject;
-import polytech.sacc.onfine.Utils;
+import polytech.sacc.onfine.tools.Utils;
 import polytech.sacc.onfine.entity.User;
 import polytech.sacc.onfine.entity.exception.WrongArgumentException;
 

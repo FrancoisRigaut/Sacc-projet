@@ -2,8 +2,9 @@ package polytech.sacc.onfine.webservice.user;
 
 import com.google.appengine.repackaged.com.google.gson.Gson;
 import com.google.appengine.repackaged.com.google.gson.JsonObject;
-import polytech.sacc.onfine.Utils;
+import polytech.sacc.onfine.tools.Utils;
 import polytech.sacc.onfine.entity.exception.MissingArgumentException;
+import polytech.sacc.onfine.tools.UtilsResponse;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -22,13 +23,14 @@ public class WSAdminRegister extends HttpServlet {
             if(!jsonObject.has("email"))
                 throw new MissingArgumentException("email");
 
-            String res = Utils.makeRequest(Utils.getCurrentUrl() + "/admin/register",
+            UtilsResponse res = Utils.makeRequest(Utils.getCurrentUrl() + "/admin/register",
                     jsonObject.toString().getBytes(StandardCharsets.UTF_8),
                     Utils.RequestType.POST);
             //TODO handle response
-            resp.setStatus(HttpServletResponse.SC_CREATED);
-            resp.getWriter().print(res);
+            resp.setStatus(res.getResponseCode());
+            resp.getWriter().print(res.getResponse());
         }catch (Exception e){
+            e.printStackTrace();
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().print(e.getMessage());
         }
