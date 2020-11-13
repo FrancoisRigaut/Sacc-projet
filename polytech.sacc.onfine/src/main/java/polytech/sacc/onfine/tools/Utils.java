@@ -41,6 +41,14 @@ public abstract class Utils {
         return hostUrl;
     }
 
+    public static String removeCurrentUrlFromRequestUrl(String requestUrl){
+        if(requestUrl.contains("https"))
+            return requestUrl.replace(Utils.getCurrentUrl() + "/", "");
+
+        String currentUrl = Utils.getCurrentUrl().replace("https", "http");
+        return requestUrl.replace(currentUrl + "/", "");
+    }
+
     public static UtilsResponse makeRequest(String urlString, byte[] bytes, RequestType type) throws Exception{
         URL url = new URL(urlString);
         URLConnection con = url.openConnection();

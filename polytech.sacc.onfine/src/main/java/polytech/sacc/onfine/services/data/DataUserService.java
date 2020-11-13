@@ -21,8 +21,7 @@ import java.util.ArrayList;
 public class DataUserService extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String requestURL = req.getRequestURL().toString().replace(Utils.getCurrentUrl() + "/", "");
-        // if you have http://localhost:8080/stats/users/count this will result to stats/users/count
+        String requestURL = Utils.removeCurrentUrlFromRequestUrl(req.getRequestURL().toString());
         String[] parsing = requestURL.split("/");
 
         try {
@@ -45,7 +44,7 @@ public class DataUserService extends HttpServlet {
                     countContactedPoi(req, resp, admin);
                     break;
                 default:
-                    throw new WrongArgumentException(parsing[2]);
+                    throw new WrongArgumentException(parsing[2] + " - for url [" + Utils.getCurrentUrl() + "] - and getRequestUrl was [" + req.getRequestURL() + "]");
             }
         }catch (Exception e){
             System.out.println("Got a problem here : " + e.getMessage());
