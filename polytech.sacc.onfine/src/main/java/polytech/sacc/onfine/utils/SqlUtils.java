@@ -1,4 +1,4 @@
-package polytech.sacc.onfine.repository;
+package polytech.sacc.onfine.utils;
 
 import polytech.sacc.onfine.tools.Utils;
 
