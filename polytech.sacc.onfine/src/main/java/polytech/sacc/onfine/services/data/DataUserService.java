@@ -1,5 +1,6 @@
 package polytech.sacc.onfine.services.data;
 
+import com.google.appengine.api.datastore.*;
 import polytech.sacc.onfine.tools.Utils;
 import polytech.sacc.onfine.entity.Admin;
 import polytech.sacc.onfine.entity.exception.MissingArgumentException;
@@ -14,7 +15,11 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.Properties;
 
 @WebServlet(name = "DataServiceUser", value = "/stats/users/*")
@@ -53,6 +58,28 @@ public class DataUserService extends HttpServlet {
             resp.getWriter().print(e.getMessage());
         }
     }
+
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String requestURL = req.getRequestURL().toString().replace(Utils.getCurrentUrl() + "/", "");
+        String[] parsing = requestURL.split("/");
+        try {
+            switch (parsing[2]) {
+                case "delete-all":
+                    handleDeleteAllData(req, resp);
+                    break;
+                default:
+                    throw new WrongArgumentException(parsing[2]);
+            }
+        }catch (Exception e){
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().print(e.getMessage());
+        }
+
+        resp.setStatus(HttpServletResponse.SC_OK);
+        resp.getWriter().print("All data deleted.");
+    }
+
     private void handleCountUsers(HttpServletResponse resp, Admin loggedAdmin) throws Exception{
         System.out.println("Handle count users");
         sendMail("Ma valeur de test", loggedAdmin);
@@ -60,6 +87,42 @@ public class DataUserService extends HttpServlet {
 
     private void handleCountPoiUsers(HttpServletResponse resp, Admin loggedAdmin){
         System.out.println("Handle count users poi");
+    }
+
+    private void handleDeleteAllData(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+
+        // Delete NoSQL DBs
+        // Use PreparedQuery interface to retrieve results
+        PreparedQuery users = datastore.prepare(new Query("User"));
+        PreparedQuery meetings = datastore.prepare(new Query("Meeting"));
+
+        for (Entity result : users.asIterable()) {
+            resp.getWriter().println(result.toString());
+            datastore.delete(result.getKey());
+        }
+        for (Entity result : meetings.asIterable()) {
+            resp.getWriter().println(result.toString());
+            datastore.delete(result.getKey());
+        }
+
+        // Delete SQL DBs
+        DataSource pool = (DataSource) req.getServletContext().getAttribute(Utils.PG_POOL);
+        try (Connection conn = pool.getConnection()) {
+            PreparedStatement statement = conn.prepareStatement("TRUNCATE TABLE user_poi");
+            statement.executeQuery();
+            statement.close();
+            PreparedStatement statement2 = conn.prepareStatement("TRUNCATE TABLE admin");
+            statement2.executeQuery();
+            statement2.close();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().print("Error while deleting datas in SQL");
+        }
+
+        resp.setStatus(HttpServletResponse.SC_OK);
+        resp.getWriter().print("All data deleted.");
     }
 
     private void countPositionUpdates(HttpServletResponse resp, Admin loggedAdmin){
