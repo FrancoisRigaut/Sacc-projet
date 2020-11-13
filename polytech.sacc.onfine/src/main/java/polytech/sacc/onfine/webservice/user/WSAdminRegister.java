@@ -26,7 +26,7 @@ public class WSAdminRegister extends HttpServlet {
             UtilsResponse res = Utils.makeRequest(Utils.getCurrentUrl() + "/admin/register",
                     jsonObject.toString().getBytes(StandardCharsets.UTF_8),
                     Utils.RequestType.POST);
-            //TODO handle response
+
             resp.setStatus(res.getResponseCode());
             resp.getWriter().print(res.getResponse());
         }catch (Exception e){
