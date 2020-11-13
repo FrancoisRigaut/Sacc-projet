@@ -11,11 +11,17 @@ import polytech.sacc.onfine.tools.Utils;
 import polytech.sacc.onfine.entity.User;
 import polytech.sacc.onfine.entity.exception.WrongArgumentException;
 
+import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.stream.Collectors;
 
 @WebServlet(name = "UserService", value = "/user/*")
@@ -86,15 +92,45 @@ public class UserService extends HttpServlet {
             datastore.add(task);
             System.out.printf("Saved %s : %s", task.getKey().getId(), task.getKey().getName());
             resp.setStatus(HttpServletResponse.SC_CREATED);
-            resp.getWriter().print("User created");
+            resp.getWriter().printf("User created, sha1 : %s", task.getKey().getName());
         }
     }
 
     private void handleSetPoiUser(HttpServletRequest req, HttpServletResponse resp) throws Exception{
         User userEntity = new Gson().fromJson(req.getReader().lines().collect(Collectors.joining(System.lineSeparator())), User.class);
         System.out.println(userEntity);
-        //TODO do you bail
-        resp.setStatus(HttpServletResponse.SC_OK);
-        resp.getWriter().print("Ok");
+
+        DataSource pool = (DataSource) req.getServletContext().getAttribute(Utils.PG_POOL);
+
+        try (Connection conn = pool.getConnection()) {
+            PreparedStatement statement = conn.prepareStatement("SELECT count(*) as numberUser FROM  user_poi WHERE sha1 = ?");
+            statement.setString(1, userEntity.getSha1());
+            ResultSet res = statement.executeQuery();
+            statement.close();
+            if(res.next()){
+                if(res.getInt("numberUser") > 0){
+                    resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    throw new RuntimeException("A user is already PoI for this sha1");
+                }
+            }else{
+                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                throw new RuntimeException("Error while fetching user_poi");
+            }
+
+            statement = conn.prepareStatement("INSERT INTO  user_poi(sha1) VALUES(?)");
+            statement.setString(1, userEntity.getSha1());
+            boolean inserted = statement.execute();
+            statement.close();
+//            if(!inserted) {
+//                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+//                throw new RuntimeException("The user can not be inserted");
+//            }
+            resp.setStatus(HttpServletResponse.SC_CREATED);
+            resp.getWriter().printf("User set to PoI : %s", userEntity.getSha1());
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            throw new ServletException("Unable to successfully connect to the database.", ex);
+        }
     }
 }
