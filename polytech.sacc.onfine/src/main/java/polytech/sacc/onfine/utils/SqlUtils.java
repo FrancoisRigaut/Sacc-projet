@@ -1,5 +1,6 @@
 package polytech.sacc.onfine.utils;
 
+import polytech.sacc.onfine.entity.Admin;
 import polytech.sacc.onfine.tools.Utils;
 
 import javax.servlet.ServletException;
@@ -14,6 +15,33 @@ import java.sql.SQLException;
 import java.util.List;
 
 public class SqlUtils {
+
+    public static boolean sqlReqAndMailBool(HttpServletRequest req, String sqlQuery, List<String> params, Admin admin) throws Exception {
+        try {
+            boolean rs = sqlRequestBool(req, sqlQuery, params);
+            if (!rs) {
+                NetUtils.sendMail("Error while executing request: " + sqlQuery, admin);
+            }
+            return rs;
+        } catch (ServletException e) {
+            NetUtils.sendMail("Exception: " + e.getMessage(), admin);
+            return false;
+        }
+    }
+
+    public static ResultSet sqlReqAndMailSet(HttpServletRequest req, String sqlQuery, List<String> params, Admin admin) throws Exception {
+        try {
+            ResultSet rs = sqlRequestSet(req, sqlQuery, params);
+            if (!rs.next()) {
+                NetUtils.sendMail("Error while executing request: " + sqlQuery, admin);
+            }
+            return rs;
+        } catch (ServletException | SQLException e) {
+            NetUtils.sendMail("Exception: " + e.getMessage(), admin);
+            return null;
+        }
+    }
+
     public static boolean sqlReqAndRespBool(HttpServletRequest req, String sqlQuery, List<String> params, HttpServletResponse resp) throws IOException {
         try {
             boolean rs = sqlRequestBool(req, sqlQuery, params);
