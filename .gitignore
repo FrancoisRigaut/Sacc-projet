@@ -23,4 +23,5 @@
 pkg/*
 */target/
 
+vendor
 sacc-onfine-dc042eb66eba.json

@@ -1,0 +1,9 @@
+CREATE DATABASE sacc_onfine;
+
+CREATE TABLE admin(
+    email VARCHAR(255) NOT NULL PRIMARY KEY
+);
+
+CREATE TABLE user_poi(
+    sha1 VARCHAR(255) NOT NULL PRIMARY KEY
+);

@@ -8,6 +8,14 @@
 - Rigaut François
 - Richard Peres
 
+# Using project
+
+//TODO describe to prof ce qu'il faut faire
+
+# Create and manage Google Cloud Project
+
+Attention to the teacher : the following steps explain the way we managed our Google Cloud project, so you do not have to read this part.
+
 ## Building this project
 
 Launch the google cloud console then launch the following commands
@@ -33,8 +41,20 @@ To allow using task you need to set the env credentials var. Type `set GOOGLE_AP
   - If you are running server with intelliJ, you need to set the configuration env var in Edit Configurations >  Startup Connection
 
 To create a task follow the steps
-- `gcloud tasks queues create TASK_NAME
+- `gcloud tasks queues create TASK_NAME`
 - Wait few minutes and then `gcloud tasks queues describe TASK_NAME` to check if the task is up
+
+## Creating MySQL database
+
+First get to the Google Cloud Console. Then get to the Sql > Instances page.  
+Click on "Create instance". Choose for example PostgreSQL.  
+Choose your database ID `pg-instance-sacc` and the password for postgres user can be `superpassword`.  
+Also download the postgresql drivers to connect to the database from your computer [HERE](https://www.enterprisedb.com/downloads/postgres-postgresql-downloads).  
+Once everything has been created, you can connect to the database by typing the command `gcloud sql connect pg-instance-sacc --user=postgres`.  
+Then run `\connect sacc_onfine` to connect to the database.  
+Note that the file [POSTGRESQL_script.sql](./POSTGRESQL_script.sql) contains the structure of our database.
+
+To be able to see logs in IntelliJ from Google Cloud, get to Edit configurations > VM Options > `-Dlog4j.configurationFile=PATH_TO\log4j2.xml` 
 
 ## How to use
 
