@@ -88,6 +88,7 @@ public class DataUserService extends HttpServlet {
             if (rs != null) {
                 try {
                     NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_OK, rs.getInt("cpt")+"");
+                    NetUtils.sendResultMail("Number of PoI", rs.getInt("cpt")+"", loggedAdmin);
                 } catch (SQLException e) {
                     NetUtils.sendResponseWithCode(resp,
                             HttpServletResponse.SC_INTERNAL_SERVER_ERROR,

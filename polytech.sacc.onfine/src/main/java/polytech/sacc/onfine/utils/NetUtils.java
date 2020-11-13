@@ -21,8 +21,23 @@ public class NetUtils {
         return new Gson().fromJson(req.getReader().lines().collect(Collectors.joining(System.lineSeparator())), c);
     }
 
-    public static void sendMail(String data, Admin adminToSendMail) throws UnsupportedEncodingException, MessagingException {
+    public static void sendResultMail(String title, String data, Admin adminToSendMail) throws UnsupportedEncodingException, MessagingException {
+        mail("Sacc onfine - Your statistics results",
+                "Your result for requesting the following: " + title + " is: \n"+ data,
+                adminToSendMail);
+    }
+
+    public static void sendErrorMail(String query, String data, Admin adminToSendMail) throws UnsupportedEncodingException, MessagingException {
+        mail("Sacc onfine - Error while executing query",
+                "Your query: " + query + " raised the following error: \n" + data,
+                adminToSendMail);
+    }
+
+    public static void mail(String subject, String content, Admin adminToSendMail) throws UnsupportedEncodingException, MessagingException {
+        System.out.println("--- Sending mail ---");
         System.out.println(adminToSendMail.toString());
+        System.out.println(subject);
+        System.out.println(content);
         Properties props = new Properties();
         Session session = Session.getDefaultInstance(props, null);
 
@@ -30,8 +45,8 @@ public class NetUtils {
         msg.setFrom(new InternetAddress("damien.montoya26@gmail.com", "The system"));
         msg.addRecipient(Message.RecipientType.TO,
                 new InternetAddress(adminToSendMail.getEmail(), "You"));
-        msg.setSubject("Your statistics");
-        msg.setText(data);
+        msg.setSubject(subject);
+        msg.setText(content);
         Transport.send(msg);
     }
 

@@ -20,11 +20,11 @@ public class SqlUtils {
         try {
             boolean rs = sqlRequestBool(req, sqlQuery, params);
             if (!rs) {
-                NetUtils.sendMail("Error while executing request: " + sqlQuery, admin);
+                NetUtils.sendErrorMail(sqlQuery, "Error while executing request: " + sqlQuery, admin);
             }
             return rs;
         } catch (ServletException e) {
-            NetUtils.sendMail("Exception: " + e.getMessage(), admin);
+            NetUtils.sendErrorMail(sqlQuery, "Exception: " + e.getMessage(), admin);
             return false;
         }
     }
@@ -33,11 +33,11 @@ public class SqlUtils {
         try {
             ResultSet rs = sqlRequestSet(req, sqlQuery, params);
             if (!rs.next()) {
-                NetUtils.sendMail("Error while executing request: " + sqlQuery, admin);
+                NetUtils.sendErrorMail(sqlQuery, "Error while executing request: " + sqlQuery, admin);
             }
             return rs;
         } catch (ServletException | SQLException e) {
-            NetUtils.sendMail("Exception: " + e.getMessage(), admin);
+            NetUtils.sendErrorMail(sqlQuery, "Exception: " + e.getMessage(), admin);
             return null;
         }
     }
