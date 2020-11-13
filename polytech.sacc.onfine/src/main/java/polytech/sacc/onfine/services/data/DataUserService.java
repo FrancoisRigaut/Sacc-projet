@@ -1,5 +1,8 @@
 package polytech.sacc.onfine.services.data;
 
+import com.google.appengine.repackaged.com.google.gson.Gson;
+import polytech.sacc.onfine.utils.NetUtils;
+import polytech.sacc.onfine.utils.SqlUtils;
 import polytech.sacc.onfine.tools.Utils;
 import polytech.sacc.onfine.entity.Admin;
 import polytech.sacc.onfine.entity.exception.MissingArgumentException;
@@ -15,7 +18,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 @WebServlet(name = "DataServiceUser", value = "/stats/users/*")
 public class DataUserService extends HttpServlet {
@@ -33,16 +40,16 @@ public class DataUserService extends HttpServlet {
 
             switch (parsing[2]) {
                 case "count":
-                    handleCountUsers(resp, admin);
+                    handleCountUsers(req, resp, admin);
                     break;
                 case "count-poi":
-                    handleCountPoiUsers(resp, admin);
+                    handleCountPoiUsers(req, resp, admin);
                     break;
                 case "count-position-updates":
-                    countPositionUpdates(resp, admin);
+                    countPositionUpdates(req, resp, admin);
                     break;
                 case "contacted-poi":
-                    countContactedPoi(resp, admin);
+                    countContactedPoi(req, resp, admin);
                     break;
                 default:
                     throw new WrongArgumentException(parsing[2]);
@@ -53,34 +60,46 @@ public class DataUserService extends HttpServlet {
             resp.getWriter().print(e.getMessage());
         }
     }
-    private void handleCountUsers(HttpServletResponse resp, Admin loggedAdmin) throws Exception{
-        System.out.println("Handle count users");
-        sendMail("Ma valeur de test", loggedAdmin);
+
+    private void handleCountUsers(HttpServletRequest req, HttpServletResponse resp, Admin loggedAdmin){
+
     }
 
-    private void handleCountPoiUsers(HttpServletResponse resp, Admin loggedAdmin){
-        System.out.println("Handle count users poi");
+    private void handleCountPoiUsers(HttpServletRequest req, HttpServletResponse resp, Admin loggedAdmin) throws IOException {
+        //Admin entity = (Admin) NetUtils.getGsonEntity(req, Admin.class);
+        //List<String> params = Arrays.asList(entity.getEmail());
+        try {
+            ResultSet rs = SqlUtils.sqlReqAndMailSet(req, "SELECT count(*) AS cpt FROM user_poi", new ArrayList<>(), loggedAdmin);
+            if (rs != null) {
+                try {
+                    NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_OK, rs.getInt("cpt")+"");
+                } catch (SQLException e) {
+                    NetUtils.sendResponseWithCode(resp,
+                            HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                            "Error when counting PoI users: " + e.getMessage()
+                    );
+                }
+            } else { // In case of error, mail is already sent in sqlReqAndMail function
+                NetUtils.sendResponseWithCode(resp,
+                        HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        "Error when counting PoI users : Result was null"
+                );
+            }
+        } catch (Exception e) {
+            NetUtils.sendResponseWithCode(resp,
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Error when counting PoI users: " + e.getMessage()
+            );
+        }
     }
 
-    private void countPositionUpdates(HttpServletResponse resp, Admin loggedAdmin){
+    private void countPositionUpdates(HttpServletRequest req, HttpServletResponse resp, Admin loggedAdmin){
         System.out.println("Handle count users updates");
     }
 
-    private void countContactedPoi(HttpServletResponse resp, Admin loggedAdmin){
+    private void countContactedPoi(HttpServletRequest req, HttpServletResponse resp, Admin loggedAdmin){
         System.out.println("Handle count users contacted poi");
     }
 
-    private void sendMail(String data, Admin adminToSendMail) throws Exception{
-        System.out.println(adminToSendMail.toString());
-        Properties props = new Properties();
-        Session session = Session.getDefaultInstance(props, null);
 
-        Message msg = new MimeMessage(session);
-        msg.setFrom(new InternetAddress("damien.montoya26@gmail.com", "The system"));
-        msg.addRecipient(Message.RecipientType.TO,
-                new InternetAddress(adminToSendMail.getEmail(), "You"));
-        msg.setSubject("Your statistics");
-        msg.setText(data);
-        Transport.send(msg);
-    }
 }
