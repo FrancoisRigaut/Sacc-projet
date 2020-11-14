@@ -55,7 +55,7 @@ public class WSDataServiceUser extends HttpServlet {
         try {
             switch (parsing[2]) {
                 case "delete-all":
-                    handleDeleteAll(req, resp);
+                    handleDeleteAll(req, resp, "/" + requestURL);
                     break;
                 case "random-stat": // TODO TRIAGON
                     handleRandomStat(req, resp, "/stats/users/random-stat");
@@ -67,9 +67,6 @@ public class WSDataServiceUser extends HttpServlet {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().print(e.getMessage());
         }
-
-        resp.setStatus(HttpServletResponse.SC_OK);
-        resp.getWriter().print("All data deleted.");
     }
 
     private void handleFastStatsCalculation(HttpServletResponse resp, String requestUrl) throws IOException {
@@ -98,14 +95,12 @@ public class WSDataServiceUser extends HttpServlet {
         System.out.println("Long : " + requestUrl);
     }
 
-    private void handleDeleteAll(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    private void handleDeleteAll(HttpServletRequest req, HttpServletResponse resp, String requestURL) throws IOException {
         JsonObject jsonObject = (JsonObject) NetUtils.getGsonEntity(req, JsonObject.class);
-
         try{
-            UtilsResponse res = Utils.makeRequest(Utils.getCurrentUrl() + "/stats/users/delete-all",
+            UtilsResponse res = Utils.makeRequest(Utils.getCurrentUrl() + requestURL,
                     jsonObject.toString().getBytes(StandardCharsets.UTF_8),
                     Utils.RequestType.DELETE);
-
             resp.setStatus(res.getResponseCode());
             resp.getWriter().print(res.getResponse());
         }catch (Exception e){
@@ -143,7 +138,11 @@ public class WSDataServiceUser extends HttpServlet {
 
     private Publisher publisher;
 
-    WSDataServiceUser(Publisher publisher) {
+    public WSDataServiceUser(){
+
+    }
+
+    public WSDataServiceUser(Publisher publisher) {
         this.publisher = publisher;
     }
 }

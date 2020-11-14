@@ -4,7 +4,9 @@ import com.google.appengine.repackaged.com.google.gson.Gson;
 import com.google.cloud.datastore.*;
 import polytech.sacc.onfine.entity.Gps;
 import polytech.sacc.onfine.entity.Meeting;
+import polytech.sacc.onfine.entity.User;
 import polytech.sacc.onfine.entity.exception.WrongArgumentException;
+import polytech.sacc.onfine.services.user.UserService;
 import polytech.sacc.onfine.tools.Utils;
 import polytech.sacc.onfine.utils.NetUtils;
 
@@ -57,6 +59,32 @@ public class MeetingService extends HttpServlet {
 
     private void handleRegisterMeeting(HttpServletRequest req, HttpServletResponse resp) throws IOException{
         Meeting meeting = (Meeting) NetUtils.getGsonEntity(req, Meeting.class);
+
+        if(!UserService.isUserExisting(new User(meeting.getSha1()))){
+            resp.setStatus(HttpServletResponse.SC_CONFLICT);
+            System.out.printf("User with sha1 %s does not exists\n", meeting.getSha1());
+            resp.getWriter().printf("User with sha1 %s does not exists", meeting.getSha1());
+            return;
+        }
+        if(!UserService.isUserExisting(new User(meeting.getSha1Met()))){
+            resp.setStatus(HttpServletResponse.SC_CONFLICT);
+            System.out.printf("User with sha1 %s does not exists\n", meeting.getSha1Met());
+            resp.getWriter().printf("User with sha1 %s does not exists", meeting.getSha1Met());
+            return;
+        }
+        if(meeting.getSha1() == null || meeting.getSha1Met() == null){
+            resp.setStatus(HttpServletResponse.SC_CONFLICT);
+            System.out.print("Users must be defined\n");
+            resp.getWriter().print("Users must be defined");
+            return;
+        }
+        if(meeting.getSha1().equals(meeting.getSha1Met())){
+            resp.setStatus(HttpServletResponse.SC_CONFLICT);
+            System.out.print("Users must be different\n");
+            resp.getWriter().print("Users must be different");
+            return;
+        }
+
         Datastore datastore = connectToDatastore();
         IncompleteKey key = getDatastoreKey(datastore);
         FullEntity<IncompleteKey> newMeeting = FullEntity.newBuilder(key)
