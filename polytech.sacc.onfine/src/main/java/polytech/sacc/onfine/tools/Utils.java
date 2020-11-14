@@ -17,7 +17,8 @@ public abstract class Utils {
 
     public enum RequestType{
         POST("POST"),
-        PUT("PUT");
+        PUT("PUT"),
+        DELETE("DELETE");
 
         private final String type;
 

@@ -1,6 +1,5 @@
 package polytech.sacc.onfine.services.user;
 
-import com.google.appengine.repackaged.com.google.gson.Gson;
 import com.google.appengine.repackaged.com.google.gson.JsonObject;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
@@ -26,10 +25,8 @@ import java.util.Collections;
 public class UserService extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String requestURL = req.getRequestURL().toString().replace(Utils.getCurrentUrl() + "/", "");
-        // if you have http://localhost:8080/stats/users/count this will result to stats/users/count
+        String requestURL = Utils.removeCurrentUrlFromRequestUrl(req.getRequestURL().toString());
         String[] parsing = requestURL.split("/");
-
         try {
             switch (parsing[1]) {
                 case "register":
@@ -49,7 +46,6 @@ public class UserService extends HttpServlet {
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String requestURL = req.getRequestURL().toString().replace(Utils.getCurrentUrl() + "/", "");
         String[] parsing = requestURL.split("/");
-
         try {
             switch (parsing[1]) {
                 case "set-poi":

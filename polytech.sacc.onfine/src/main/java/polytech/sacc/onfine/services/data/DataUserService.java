@@ -1,6 +1,11 @@
 package polytech.sacc.onfine.services.data;
 
+import polytech.sacc.onfine.entity.Message;
+import com.google.appengine.repackaged.com.google.gson.Gson;
+import com.google.appengine.repackaged.com.google.gson.JsonElement;
+import com.google.appengine.repackaged.com.google.gson.JsonParser;
 import com.google.cloud.datastore.*;
+import polytech.sacc.onfine.entity.MessageRepository;
 import polytech.sacc.onfine.utils.NetUtils;
 import polytech.sacc.onfine.utils.SqlUtils;
 import polytech.sacc.onfine.tools.Utils;
@@ -12,10 +17,15 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.stream.Collectors;
 
 @WebServlet(name = "DataServiceUser", value = "/stats/users/*")
 public class DataUserService extends HttpServlet {
@@ -29,6 +39,11 @@ public class DataUserService extends HttpServlet {
             if(email == null)
                 throw new MissingArgumentException("admin");
             Admin admin = new Admin(email);
+            if(!isAnAdmin(req, admin)){
+                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                resp.getWriter().printf("Admin with sha1 %s does not exists", admin.getEmail());
+                return;
+            }
             String sha1;
 
             switch (parsing[2]) {
@@ -60,14 +75,30 @@ public class DataUserService extends HttpServlet {
         }
     }
 
+    private boolean isAnAdmin(HttpServletRequest req, Admin adminEntity) throws SQLException{
+        DataSource pool = (DataSource) req.getServletContext().getAttribute(Utils.PG_POOL);
+        Connection conn = pool.getConnection();
+        PreparedStatement statement = conn.prepareStatement("SELECT count(*) as numberAdmin FROM admin WHERE email = ?");
+        statement.setString(1, adminEntity.getEmail());
+        ResultSet res = statement.executeQuery();
+        statement.close();
+        if(res.next()) {
+            return res.getInt("numberAdmin") > 0;
+        }
+        return false;
+    }
+
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String requestURL = req.getRequestURL().toString().replace(Utils.getCurrentUrl() + "/", "");
         String[] parsing = requestURL.split("/");
         try {
             switch (parsing[2]) {
                 case "delete-all":
                     handleDeleteAllData(req, resp);
+                    break;
+                case "random-stat": // TODO TRIAGON
+                    handleRandomStat(req, resp);
                     break;
                 default:
                     throw new WrongArgumentException(parsing[2]);
@@ -209,5 +240,48 @@ public class DataUserService extends HttpServlet {
         SqlUtils.sqlReqAndRespBool(req, "TRUNCATE TABLE admin", new ArrayList<>(), resp);
 
         NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_OK, "All data deleted.");
+    }
+
+    private void handleRandomStat(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String pubsubVerificationToken = System.getenv("PUBSUB_VERIFICATION_TOKEN");
+        // Do not process message if request token does not match pubsubVerificationToken
+        if (req.getParameter("token").compareTo(pubsubVerificationToken) != 0) {
+            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+        // parse message object from "message" field in the request body json
+        // decode message data from base64
+        Message message = getMessage(req);
+        try {
+            messageRepository.save(message);
+            // 200, 201, 204, 102 status codes are interpreted as success by the Pub/Sub system
+            resp.setStatus(102);
+        } catch (Exception e) {
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    private Message getMessage(HttpServletRequest request) throws IOException {
+        String requestBody = request.getReader().lines().collect(Collectors.joining("\n"));
+        JsonElement jsonRoot = jsonParser.parse(requestBody);
+        String messageStr = jsonRoot.getAsJsonObject().get("message").toString();
+        Message message = gson.fromJson(messageStr, Message.class);
+        // decode from base64
+        String decoded = decode(message.getData());
+        message.setData(decoded);
+        return message;
+    }
+
+    private String decode(String data) {
+        return new String(Base64.getDecoder().decode(data));
+    }
+
+    private final Gson gson = new Gson();
+    private final JsonParser jsonParser = new JsonParser();
+    private MessageRepository messageRepository;
+
+    DataUserService(MessageRepository messageRepository) {
+        this.messageRepository = messageRepository;
     }
 }
