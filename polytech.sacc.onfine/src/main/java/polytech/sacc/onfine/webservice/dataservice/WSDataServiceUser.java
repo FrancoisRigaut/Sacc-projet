@@ -14,6 +14,13 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
+import com.google.cloud.ServiceOptions;
+import com.google.cloud.pubsub.v1.Publisher;
+import com.google.protobuf.ByteString;
+import com.google.pubsub.v1.ProjectTopicName;
+import com.google.pubsub.v1.PubsubMessage;
+import org.apache.http.HttpStatus;
+
 
 @WebServlet(name = "WSDataServiceUser", value = "/ws/stats/users/*")
 public class WSDataServiceUser extends HttpServlet {
@@ -49,6 +56,9 @@ public class WSDataServiceUser extends HttpServlet {
             switch (parsing[2]) {
                 case "delete-all":
                     handleDeleteAll(req, resp);
+                    break;
+                case "random-stat": // TODO TRIAGON
+                    handleRandomStat(req, resp, "/stats/users/random-stat");
                     break;
                 default:
                     throw new WrongArgumentException(parsing[2]);
@@ -104,5 +114,37 @@ public class WSDataServiceUser extends HttpServlet {
             resp.getWriter().println("Error when deleting data");
             resp.getWriter().print(e.getMessage());
         }
+    }
+
+    private void handleRandomStat(HttpServletRequest req, HttpServletResponse resp, String requestUrl) throws IOException {
+        Publisher publisher = this.publisher;
+        try {
+            String topicId = System.getenv("PUBSUB_TOPIC");
+            // create a publisher on the topic
+            if (publisher == null) {
+                ProjectTopicName topicName =
+                        ProjectTopicName.newBuilder()
+                                .setProject(ServiceOptions.getDefaultProjectId())
+                                .setTopic(topicId)
+                                .build();
+                publisher = Publisher.newBuilder(topicName).build();
+            }
+            // construct a pubsub message from the payload
+            final String payload = req.getParameter("payload");
+            PubsubMessage pubsubMessage =
+                    PubsubMessage.newBuilder().setData(ByteString.copyFromUtf8(payload)).build();
+
+            publisher.publish(pubsubMessage);
+            // redirect to home page
+            resp.sendRedirect("/");
+        } catch (Exception e) {
+            resp.sendError(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    private Publisher publisher;
+
+    WSDataServiceUser(Publisher publisher) {
+        this.publisher = publisher;
     }
 }
