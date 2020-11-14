@@ -10,6 +10,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 import polytech.sacc.onfine.tools.Utils;
 import polytech.sacc.onfine.entity.User;
 import polytech.sacc.onfine.entity.exception.WrongArgumentException;
+import polytech.sacc.onfine.utils.NetUtils;
+import polytech.sacc.onfine.utils.SqlUtils;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -22,6 +24,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.stream.Collectors;
 
 @WebServlet(name = "UserService", value = "/user/*")
@@ -67,14 +71,13 @@ public class UserService extends HttpServlet {
         }
     }
 
-    private void handleRegisterUser(HttpServletRequest req, HttpServletResponse resp) throws Exception{
-        JsonObject jsonObject = new Gson().fromJson(req.getReader().lines().collect(Collectors.joining(System.lineSeparator())), JsonObject.class);
+    private void handleRegisterUser(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        JsonObject jsonObject = (JsonObject)NetUtils.getGsonEntity(req, JsonObject.class);
         String phone = jsonObject.get("phone").getAsString();
         System.out.println(phone);
         String sha1 = DigestUtils.sha1Hex(phone);
         System.out.println(sha1);
 
-        //TODO store in datastore
         Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
 
         String kind = "User";
@@ -96,41 +99,30 @@ public class UserService extends HttpServlet {
         }
     }
 
-    private void handleSetPoiUser(HttpServletRequest req, HttpServletResponse resp) throws Exception{
-        User userEntity = new Gson().fromJson(req.getReader().lines().collect(Collectors.joining(System.lineSeparator())), User.class);
+    private void handleSetPoiUser(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {
+        User userEntity = (User)NetUtils.getGsonEntity(req, User.class);
         System.out.println(userEntity);
 
-        DataSource pool = (DataSource) req.getServletContext().getAttribute(Utils.PG_POOL);
-
-        try (Connection conn = pool.getConnection()) {
-            PreparedStatement statement = conn.prepareStatement("SELECT count(*) as numberUser FROM  user_poi WHERE sha1 = ?");
-            statement.setString(1, userEntity.getSha1());
-            ResultSet res = statement.executeQuery();
-            statement.close();
-            if(res.next()){
-                if(res.getInt("numberUser") > 0){
-                    resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                    throw new RuntimeException("A user is already PoI for this sha1");
-                }
-            }else{
-                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                throw new RuntimeException("Error while fetching user_poi");
+        ResultSet res = SqlUtils.sqlReqAndRespSet(
+                req,
+                "SELECT count(*) as numberUser FROM user_poi WHERE sha1 = ?",
+                Collections.singletonList(userEntity.getSha1()),
+                resp
+        );
+        if(res != null){
+            if(res.getInt("numberUser") > 0){
+                resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                throw new RuntimeException("A user is already PoI for this sha1");
             }
-
-            statement = conn.prepareStatement("INSERT INTO  user_poi(sha1) VALUES(?)");
-            statement.setString(1, userEntity.getSha1());
-            boolean inserted = statement.execute();
-            statement.close();
-//            if(!inserted) {
-//                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-//                throw new RuntimeException("The user can not be inserted");
-//            }
-            resp.setStatus(HttpServletResponse.SC_CREATED);
-            resp.getWriter().printf("User set to PoI : %s", userEntity.getSha1());
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            throw new ServletException("Unable to successfully connect to the database.", ex);
         }
+
+        SqlUtils.sqlReqAndRespBool(
+                req,
+                "INSERT INTO user_poi VALUES(?)",
+                Collections.singletonList(userEntity.getSha1()),
+                resp
+        );
+        resp.setStatus(HttpServletResponse.SC_CREATED);
+        resp.getWriter().printf("User set to PoI : %s", userEntity.getSha1());
     }
 }
