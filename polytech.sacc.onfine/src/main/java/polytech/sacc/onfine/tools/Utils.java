@@ -17,16 +17,13 @@ public abstract class Utils {
 
     public enum RequestType{
         POST("POST"),
-        PUT("PUT");
+        PUT("PUT"),
+        DELETE("DELETE");
 
         private final String type;
 
         RequestType(String type) {
             this.type = type;
-        }
-
-        public String getType() {
-            return type;
         }
     }
 
@@ -55,16 +52,12 @@ public abstract class Utils {
         HttpURLConnection http = (HttpURLConnection)con;
         http.setRequestMethod(type.type);
         http.setDoOutput(true);
-
-        int length = bytes.length;
-
-        http.setFixedLengthStreamingMode(length);
+        http.setFixedLengthStreamingMode(bytes.length);
         http.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
         http.connect();
         try(OutputStream os = http.getOutputStream()) {
             os.write(bytes);
         }
-
         try(BufferedReader br = new BufferedReader(
                 new InputStreamReader(http.getInputStream(), StandardCharsets.UTF_8))) {
             StringBuilder response = new StringBuilder();
@@ -86,26 +79,23 @@ public abstract class Utils {
         }
     }
 
-    //TODO not test donc je sais pas si ca marche
-    public static String makeGetRequest(String urlString) throws Exception{
-        URL url = new URL(urlString);
-        URLConnection con = url.openConnection();
-        HttpURLConnection http = (HttpURLConnection)con;
-        http.setRequestMethod("GET");
-        http.setDoOutput(true);
-
-        http.setFixedLengthStreamingMode(urlString.getBytes().length);
-        http.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-        http.connect();
-
-        try(BufferedReader br = new BufferedReader(
-                new InputStreamReader(http.getInputStream(), StandardCharsets.UTF_8))) {
+    public static UtilsResponse makeGetRequest(String urlString) throws Exception{
+        URL obj = new URL(urlString);
+        HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+        con.setRequestMethod("GET");
+        //con.setRequestProperty("User-Agent", USER_AGENT);
+        int responseCode = con.getResponseCode();
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+            String inputLine;
             StringBuilder response = new StringBuilder();
-            String responseLine;
-            while ((responseLine = br.readLine()) != null) {
-                response.append(responseLine.trim());
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
             }
-            return response.toString();
+            in.close();
+            return new UtilsResponse(response.toString(), responseCode);
+        } else {
+            return new UtilsResponse(null, responseCode);
         }
     }
 }
