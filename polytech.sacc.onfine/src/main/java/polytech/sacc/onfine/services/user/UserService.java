@@ -109,20 +109,27 @@ public class UserService extends HttpServlet {
         resp.getWriter().printf("User registered, sha1 : %s", task.getKey().getName());
     }
 
+    public static boolean isUserExisting(User user){
+        Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+        Key taskKey = datastore.newKeyFactory().setKind("User").newKey(user.getSha1());
+        try {
+            Entity entity = datastore.get(taskKey);
+            return entity != null;
+        }catch (Exception e) {
+            System.out.println("TEST");
+            return false;
+        }
+    }
+
     private void handleSetPoiUser(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {
         User userEntity = (User)NetUtils.getGsonEntity(req, User.class);
-        Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
-        Key taskKey = datastore.newKeyFactory().setKind("User").newKey(userEntity.getSha1());
-
-        try {
-            Entity retrieved = datastore.get(taskKey);  // check that the user is in nosql db
-            System.out.printf("User with sha1 %s exists\n", retrieved.getKey());
-        } catch (Exception e) {
+        if(!isUserExisting(userEntity)){
             resp.setStatus(HttpServletResponse.SC_CONFLICT);
             System.out.printf("User with sha1 %s does not exists\n", userEntity.getSha1());
             resp.getWriter().printf("User with sha1 %s does not exists", userEntity.getSha1());
             return;
         }
+
         ResultSet res = SqlUtils.sqlReqAndRespSet(
                 req,
                 "SELECT count(*) as numberUser FROM user_poi WHERE sha1 = ?",

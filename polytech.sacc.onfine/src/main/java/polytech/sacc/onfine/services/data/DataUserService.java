@@ -277,7 +277,11 @@ public class DataUserService extends HttpServlet {
     private final JsonParser jsonParser = new JsonParser();
     private MessageRepository messageRepository;
 
-    DataUserService(MessageRepository messageRepository) {
+    public DataUserService(){
+
+    }
+
+    public DataUserService(MessageRepository messageRepository) {
         this.messageRepository = messageRepository;
     }
 }
