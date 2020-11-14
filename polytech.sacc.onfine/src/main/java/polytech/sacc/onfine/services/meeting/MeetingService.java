@@ -19,11 +19,8 @@ public class MeetingService extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         Meeting meeting = (Meeting) NetUtils.getGsonEntity(req, Meeting.class);
-        System.out.println(meeting);
-
         Datastore datastore = connectToDatastore();
         IncompleteKey key = getDatastoreKey(datastore);
-
         FullEntity<IncompleteKey> newMeeting = FullEntity.newBuilder(key)
                 .set("meeting_sha1", meeting.getSha1())
                 .set("meeting_sha1Met", meeting.getSha1Met())
@@ -32,6 +29,7 @@ public class MeetingService extends HttpServlet {
                 .set("meeting_timestamp", meeting.getTimestamp())
                 .build();
 
+        System.out.printf("Meeting registered %s\n", meeting.toString());
         resp.setStatus(HttpServletResponse.SC_CREATED);
         resp.getWriter().print(new Gson().toJson(parseEntity(datastore.add(newMeeting))));
     }

@@ -34,10 +34,6 @@ public class NetUtils {
     }
 
     public static void mail(String subject, String content, Admin adminToSendMail) throws UnsupportedEncodingException, MessagingException {
-        System.out.println("--- Sending mail ---");
-        System.out.println(adminToSendMail.toString());
-        System.out.println(subject);
-        System.out.println(content);
         Properties props = new Properties();
         Session session = Session.getDefaultInstance(props, null);
 
