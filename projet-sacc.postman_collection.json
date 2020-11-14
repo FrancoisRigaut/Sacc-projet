@@ -1,0 +1,334 @@
+{
+	"info": {
+		"_postman_id": "6c2739b1-1fb0-478d-a6aa-070d5c9bff02",
+		"name": "projet-sacc",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Register",
+			"item": [
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"phone\": \"0625847499\"\r\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/ws/user/register",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"ws",
+								"user",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Register Admin",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"admin@mail.fr\"\r\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/ws/admin/register",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"ws",
+								"admin",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find Admin",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8080/ws/admin/find-all",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"ws",
+								"admin",
+								"find-all"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Point Of Interest",
+			"item": [
+				{
+					"name": "Set User PoI",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"sha1\" : \"019b83c22334c532aebdd162f011e7e63dfb00c4\"\r\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/ws/user/set-poi",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"ws",
+								"user",
+								"set-poi"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Meeting",
+			"item": [
+				{
+					"name": "Add Meeting",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"sha1\" : \"085b8e735b958c8dbdf9f5d7177d12a022275cdc\",\r\n    \"sha1Met\": \"69064a0879f134e6ba1783618e9059b8d530c7ed\",\r\n    \"timestamp\": \"1604667129\",\r\n    \"gps\" : {\r\n        \"latitude\": 43.6224479675293,\r\n        \"longitude\" : 7.072978496551514\r\n    } \r\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/ws/meeting/register",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"ws",
+								"meeting",
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Add Meeting Met",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"name": "Content-Type",
+								"type": "text",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"sha1\" : \"69064a0879f134e6ba1783618e9059b8d530c7ed\",\r\n    \"sha1Met\": \"085b8e735b958c8dbdf9f5d7177d12a022275cdc\",\r\n    \"timestamp\": \"1604667130\",\r\n    \"gps\" : {\r\n        \"latitude\": 43.6224479675294,\r\n        \"longitude\" : 7.072978496551516\r\n    }  \r\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8080/ws/meeting/register",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"ws",
+								"meeting",
+								"register"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Stats",
+			"item": [
+				{
+					"name": "Number of User",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8080/ws/stats/users/count?admin=admin@mail.fr",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"ws",
+								"stats",
+								"users",
+								"count"
+							],
+							"query": [
+								{
+									"key": "admin",
+									"value": "admin@mail.fr"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Number of PoI",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8080/ws/stats/users/count-poi?admin=admin@mail.fr",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"ws",
+								"stats",
+								"users",
+								"count-poi"
+							],
+							"query": [
+								{
+									"key": "admin",
+									"value": "admin@mail.fr"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Number of Pos PoI",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "http://localhost:8080/ws/stats/users/count-position-updates?admin=admin@mail.fr&sha1=085b8e735b958c8dbdf9f5d7177d12a022275cdc",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"ws",
+								"stats",
+								"users",
+								"count-position-updates"
+							],
+							"query": [
+								{
+									"key": "admin",
+									"value": "admin@mail.fr"
+								},
+								{
+									"key": "sha1",
+									"value": "085b8e735b958c8dbdf9f5d7177d12a022275cdc"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Other",
+			"item": [
+				{
+					"name": "Delete all data",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": ""
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
