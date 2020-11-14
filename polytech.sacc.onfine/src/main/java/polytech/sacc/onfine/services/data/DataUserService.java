@@ -12,7 +12,10 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -29,16 +32,24 @@ public class DataUserService extends HttpServlet {
             if(email == null)
                 throw new MissingArgumentException("admin");
             Admin admin = new Admin(email);
+            if(!isAnAdmin(req, admin)){
+                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                resp.getWriter().printf("Admin with sha1 %s does not exists", admin.getEmail());
+                return;
+            }
 
             switch (parsing[2]) {
                 case "count":
-                    handleCountUsers(req, resp, admin);
+                    handleCountUsers(resp, admin);
                     break;
                 case "count-poi":
                     handleCountPoiUsers(req, resp, admin);
                     break;
                 case "count-position-updates":
-                    countPositionUpdates(req, resp, admin);
+                    String sha1 = req.getParameter("sha1");
+                    if(sha1 == null)
+                        throw new MissingArgumentException("sha1");
+                    handleCountPositionUpdates(resp, admin, sha1);
                     break;
                 case "contacted-poi":
                     countContactedPoi(req, resp, admin);
@@ -51,6 +62,19 @@ public class DataUserService extends HttpServlet {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().print(e.getMessage());
         }
+    }
+
+    private boolean isAnAdmin(HttpServletRequest req, Admin adminEntity) throws SQLException{
+        DataSource pool = (DataSource) req.getServletContext().getAttribute(Utils.PG_POOL);
+        Connection conn = pool.getConnection();
+        PreparedStatement statement = conn.prepareStatement("SELECT count(*) as numberAdmin FROM admin WHERE email = ?");
+        statement.setString(1, adminEntity.getEmail());
+        ResultSet res = statement.executeQuery();
+        statement.close();
+        if(res.next()) {
+            return res.getInt("numberAdmin") > 0;
+        }
+        return false;
     }
 
     @Override
@@ -103,7 +127,7 @@ public class DataUserService extends HttpServlet {
         }
     }
 
-    private void handleCountUsers(HttpServletRequest req, HttpServletResponse resp, Admin loggedAdmin) throws IOException {
+    private void handleCountUsers(HttpServletResponse resp, Admin loggedAdmin) throws IOException {
         Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
 
         Query<Entity> query = Query.newEntityQueryBuilder()
@@ -126,7 +150,30 @@ public class DataUserService extends HttpServlet {
         }
     }
 
-    private void countPositionUpdates(HttpServletRequest req, HttpServletResponse resp, Admin loggedAdmin) {
+    private void handleCountPositionUpdates(HttpServletResponse resp, Admin loggedAdmin, String sha1) throws IOException {
+        Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+
+        Query<Entity> query1 =
+                Query.newEntityQueryBuilder()
+                        .setKind("Meeting")
+                        .setFilter(StructuredQuery.PropertyFilter.eq("meeting_sha1", sha1))
+                        .build();
+        QueryResults<Entity> results1 = datastore.run(query1);
+        int cpt = 0;
+        while (results1.hasNext()) {
+            results1.next();
+            cpt++;
+        }
+
+        NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_OK, cpt+"");
+        try {
+            NetUtils.sendResultMail("Number of position updates for user " + sha1, cpt+"", loggedAdmin);
+        } catch (Exception e) {
+            NetUtils.sendResponseWithCode(resp,
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Error when counting number of position updates: " + e.getMessage()
+            );
+        }
     }
 
     private void countContactedPoi(HttpServletRequest req, HttpServletResponse resp, Admin loggedAdmin){

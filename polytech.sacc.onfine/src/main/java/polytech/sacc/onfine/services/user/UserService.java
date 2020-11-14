@@ -1,6 +1,5 @@
 package polytech.sacc.onfine.services.user;
 
-import com.google.appengine.repackaged.com.google.gson.Gson;
 import com.google.appengine.repackaged.com.google.gson.JsonObject;
 import com.google.cloud.datastore.Datastore;
 import com.google.cloud.datastore.DatastoreOptions;
@@ -13,29 +12,21 @@ import polytech.sacc.onfine.entity.exception.WrongArgumentException;
 import polytech.sacc.onfine.utils.NetUtils;
 import polytech.sacc.onfine.utils.SqlUtils;
 
-import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.sql.DataSource;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.stream.Collectors;
 
 @WebServlet(name = "UserService", value = "/user/*")
 public class UserService extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String requestURL = req.getRequestURL().toString().replace(Utils.getCurrentUrl() + "/", "");
-        // if you have http://localhost:8080/stats/users/count this will result to stats/users/count
+        String requestURL = Utils.removeCurrentUrlFromRequestUrl(req.getRequestURL().toString());
         String[] parsing = requestURL.split("/");
-
         try {
             switch (parsing[1]) {
                 case "register":
@@ -55,7 +46,6 @@ public class UserService extends HttpServlet {
     protected void doPut(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String requestURL = req.getRequestURL().toString().replace(Utils.getCurrentUrl() + "/", "");
         String[] parsing = requestURL.split("/");
-
         try {
             switch (parsing[1]) {
                 case "set-poi":
@@ -74,35 +64,39 @@ public class UserService extends HttpServlet {
     private void handleRegisterUser(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         JsonObject jsonObject = (JsonObject)NetUtils.getGsonEntity(req, JsonObject.class);
         String phone = jsonObject.get("phone").getAsString();
-        System.out.println(phone);
         String sha1 = DigestUtils.sha1Hex(phone);
-        System.out.println(sha1);
+        System.out.printf("User with phone %s has sha1 %s", phone, sha1);
 
         Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
-
-        String kind = "User";
-        Key taskKey = datastore.newKeyFactory().setKind(kind).newKey(sha1);
-
+        Key taskKey = datastore.newKeyFactory().setKind("User").newKey(sha1);
         try {
             Entity retrieved = datastore.get(taskKey);
-            System.out.printf("Retrieved %s%n", retrieved.getKey());
-            //TODO error
             resp.setStatus(HttpServletResponse.SC_CONFLICT);
-            resp.getWriter().print("User already exists");
-        } catch (Exception e) {
-            Entity task = Entity.newBuilder(taskKey)
-                    .build();
-            datastore.add(task);
-            System.out.printf("Saved %s : %s", task.getKey().getId(), task.getKey().getName());
-            resp.setStatus(HttpServletResponse.SC_CREATED);
-            resp.getWriter().printf("User created, sha1 : %s", task.getKey().getName());
-        }
+            resp.getWriter().printf("User with sha1 %s already exists", retrieved.getKey().getName());
+            return;
+        } catch (Exception ignore) { }
+
+        Entity task = Entity.newBuilder(taskKey)
+                .build();
+        datastore.add(task);
+        System.out.printf("User registered %s : %s", task.getKey().getId(), task.getKey().getName());
+        resp.setStatus(HttpServletResponse.SC_CREATED);
+        resp.getWriter().printf("User registered, sha1 : %s", task.getKey().getName());
     }
 
     private void handleSetPoiUser(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {
         User userEntity = (User)NetUtils.getGsonEntity(req, User.class);
-        System.out.println(userEntity);
+        Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+        Key taskKey = datastore.newKeyFactory().setKind("User").newKey(userEntity.getSha1());
 
+        try {
+            Entity retrieved = datastore.get(taskKey);  // check that the user is in nosql db
+            System.out.printf("User with sha1 %s exists", retrieved.getKey());
+        } catch (Exception e) {
+            resp.setStatus(HttpServletResponse.SC_CONFLICT);
+            resp.getWriter().printf("User with sha1 %s does not exists", userEntity.getSha1());
+            return;
+        }
         ResultSet res = SqlUtils.sqlReqAndRespSet(
                 req,
                 "SELECT count(*) as numberUser FROM user_poi WHERE sha1 = ?",
@@ -111,11 +105,11 @@ public class UserService extends HttpServlet {
         );
         if(res != null){
             if(res.getInt("numberUser") > 0){
-                resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                throw new RuntimeException("A user is already PoI for this sha1");
+                resp.setStatus(HttpServletResponse.SC_CONFLICT);
+                resp.getWriter().printf("User with sha1 %s is already Poi", userEntity.getSha1());
+                return;
             }
         }
-
         SqlUtils.sqlReqAndRespBool(
                 req,
                 "INSERT INTO user_poi VALUES(?)",
