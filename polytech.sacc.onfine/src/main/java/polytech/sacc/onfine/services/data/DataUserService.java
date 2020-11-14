@@ -12,7 +12,10 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
 import java.io.IOException;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -29,6 +32,11 @@ public class DataUserService extends HttpServlet {
             if(email == null)
                 throw new MissingArgumentException("admin");
             Admin admin = new Admin(email);
+            if(!isAnAdmin(req, admin)){
+                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                resp.getWriter().printf("Admin with sha1 %s does not exists", admin.getEmail());
+                return;
+            }
 
             switch (parsing[2]) {
                 case "count":
@@ -54,6 +62,19 @@ public class DataUserService extends HttpServlet {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().print(e.getMessage());
         }
+    }
+
+    private boolean isAnAdmin(HttpServletRequest req, Admin adminEntity) throws SQLException{
+        DataSource pool = (DataSource) req.getServletContext().getAttribute(Utils.PG_POOL);
+        Connection conn = pool.getConnection();
+        PreparedStatement statement = conn.prepareStatement("SELECT count(*) as numberAdmin FROM admin WHERE email = ?");
+        statement.setString(1, adminEntity.getEmail());
+        ResultSet res = statement.executeQuery();
+        statement.close();
+        if(res.next()) {
+            return res.getInt("numberAdmin") > 0;
+        }
+        return false;
     }
 
     @Override
