@@ -78,7 +78,7 @@ public class DataUserService extends HttpServlet {
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String requestURL = req.getRequestURL().toString().replace(Utils.getCurrentUrl() + "/", "");
         String[] parsing = requestURL.split("/");
         try {
