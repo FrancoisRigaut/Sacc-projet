@@ -83,7 +83,7 @@ public class AdminService extends HttpServlet {
         if(res.next()){
             if(res.getInt("numberAdmin") > 0){
                 resp.setStatus(HttpServletResponse.SC_CONFLICT);
-                resp.getWriter().printf("Admin with sha1 %s already exists", adminEntity.getEmail());
+                resp.getWriter().printf("Admin with email %s already exists", adminEntity.getEmail());
                 return;
             }
         }else{
