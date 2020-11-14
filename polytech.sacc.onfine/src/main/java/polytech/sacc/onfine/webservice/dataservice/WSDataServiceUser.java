@@ -37,7 +37,7 @@ public class WSDataServiceUser extends HttpServlet {
                     break;
                 case "count-position-updates":
                 case "contacted-poi":
-                    handleLongStatsCalculation(resp, "/" + requestURL + "?" + req.getQueryString());
+                    handleLongStatsCalculation(req, resp, "/" + requestURL + "?" + req.getQueryString());
                     break;
                 default:
                     throw new WrongArgumentException(parsing[2]);
@@ -56,9 +56,6 @@ public class WSDataServiceUser extends HttpServlet {
             switch (parsing[2]) {
                 case "delete-all":
                     handleDeleteAll(req, resp);
-                    break;
-                case "random-stat": // TODO TRIAGON
-                    handleRandomStat(req, resp, "/stats/users/random-stat");
                     break;
                 default:
                     throw new WrongArgumentException(parsing[2]);
@@ -94,29 +91,7 @@ public class WSDataServiceUser extends HttpServlet {
         }
     }
 
-    private void handleLongStatsCalculation(HttpServletResponse resp, String requestUrl){
-        // make queue when long calculations
-        System.out.println("Long : " + requestUrl);
-    }
-
-    private void handleDeleteAll(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        JsonObject jsonObject = (JsonObject) NetUtils.getGsonEntity(req, JsonObject.class);
-
-        try{
-            UtilsResponse res = Utils.makeRequest(Utils.getCurrentUrl() + "/stats/users/delete-all",
-                    jsonObject.toString().getBytes(StandardCharsets.UTF_8),
-                    Utils.RequestType.DELETE);
-
-            resp.setStatus(res.getResponseCode());
-            resp.getWriter().print(res.getResponse());
-        }catch (Exception e){
-            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            resp.getWriter().println("Error when deleting data");
-            resp.getWriter().print(e.getMessage());
-        }
-    }
-
-    private void handleRandomStat(HttpServletRequest req, HttpServletResponse resp, String requestUrl) throws IOException {
+    private void handleLongStatsCalculation(HttpServletRequest req, HttpServletResponse resp, String requestUrl) throws IOException {
         Publisher publisher = this.publisher;
         try {
             String topicId = System.getenv("PUBSUB_TOPIC");
@@ -139,6 +114,23 @@ public class WSDataServiceUser extends HttpServlet {
             resp.sendRedirect("/");
         } catch (Exception e) {
             resp.sendError(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    private void handleDeleteAll(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        JsonObject jsonObject = (JsonObject) NetUtils.getGsonEntity(req, JsonObject.class);
+
+        try{
+            UtilsResponse res = Utils.makeRequest(Utils.getCurrentUrl() + "/stats/users/delete-all",
+                    jsonObject.toString().getBytes(StandardCharsets.UTF_8),
+                    Utils.RequestType.DELETE);
+
+            resp.setStatus(res.getResponseCode());
+            resp.getWriter().print(res.getResponse());
+        }catch (Exception e){
+            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            resp.getWriter().println("Error when deleting data");
+            resp.getWriter().print(e.getMessage());
         }
     }
 
