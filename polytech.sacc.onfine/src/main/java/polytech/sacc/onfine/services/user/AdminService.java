@@ -34,7 +34,7 @@ public class AdminService extends HttpServlet {
                     throw new WrongArgumentException(parsing[2]);
             }
         }catch (Exception e){
-            System.out.println("Erreur Post AdminService : " + e.getMessage());
+            System.out.printf("Erreur Post AdminService : %s\n", e.getMessage());
             resp.getWriter().print(e.getMessage());
         }
     }
@@ -52,7 +52,7 @@ public class AdminService extends HttpServlet {
                     throw new WrongArgumentException(parsing[2]);
             }
         }catch (Exception e){
-            System.out.println("Erreur Post AdminService : " + e.getMessage());
+            System.out.printf("Erreur Post AdminService : %s\n", e.getMessage());
             resp.getWriter().print(e.getMessage());
         }
     }
@@ -94,7 +94,7 @@ public class AdminService extends HttpServlet {
         statement.setString(1, adminEntity.getEmail());
         statement.execute();
         statement.close();
-        System.out.printf("Admin registered %s", adminEntity.getEmail());
+        System.out.printf("Admin registered %s\n", adminEntity.getEmail());
         resp.setStatus(HttpServletResponse.SC_CREATED);
         resp.getWriter().printf("Admin registered %s", adminEntity.getEmail());
     }

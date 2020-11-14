@@ -85,9 +85,8 @@ public class WSDataServiceUser extends HttpServlet {
                                             .build());
             // Send create task request.
             Task task = client.createTask(queuePath, taskBuilder.build());
-            System.out.println("Task created: " + task.getName() + " for url " + requestUrl);
             resp.setStatus(HttpServletResponse.SC_OK);
-            resp.getWriter().print("Task created: " + task.getName() + " for url " + requestUrl);
+            resp.getWriter().printf("Task created: %s for url %s. You will receive a meil soon.", task.getName(), requestUrl);
         }catch (Exception e){
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().print(e.getMessage());
