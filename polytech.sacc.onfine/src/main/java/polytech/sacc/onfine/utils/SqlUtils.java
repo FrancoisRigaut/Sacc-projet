@@ -16,53 +16,61 @@ import java.util.List;
 
 public class SqlUtils {
 
-    public static boolean sqlReqAndMailBool(HttpServletRequest req, String sqlQuery, List<String> params, Admin admin) throws Exception {
+    public static boolean sqlReqAndMailBool(HttpServletRequest req, String sql, List<String> params, Admin admin) throws Exception {
         try {
-            boolean rs = sqlRequestBool(req, sqlQuery, params);
+            boolean rs = sqlRequestBool(req, sql, params);
             if (!rs) {
-                NetUtils.sendErrorMail(sqlQuery, "Error while executing request: " + sqlQuery, admin);
+                NetUtils.sendErrorMail(sql, "Error while executing request: " + sql, admin);
             }
             return rs;
         } catch (ServletException e) {
-            NetUtils.sendErrorMail(sqlQuery, "Exception: " + e.getMessage(), admin);
+            NetUtils.sendErrorMail(sql, "Exception: " + e.getMessage(), admin);
             return false;
         }
     }
 
-    public static ResultSet sqlReqAndMailSet(HttpServletRequest req, String sqlQuery, List<String> params, Admin admin) throws Exception {
+    public static ResultSet sqlReqAndMailSet(HttpServletRequest req, String sql, List<String> params, Admin admin) throws Exception {
         try {
-            ResultSet rs = sqlRequestSet(req, sqlQuery, params);
+            ResultSet rs = sqlRequestSet(req, sql, params);
             if (!rs.next()) {
-                NetUtils.sendErrorMail(sqlQuery, "Error while executing request: " + sqlQuery, admin);
+                NetUtils.sendErrorMail(sql, "Error while executing request: " + sql, admin);
             }
             return rs;
         } catch (ServletException | SQLException e) {
-            NetUtils.sendErrorMail(sqlQuery, "Exception: " + e.getMessage(), admin);
+            NetUtils.sendErrorMail(sql, "Exception: " + e.getMessage(), admin);
             return null;
         }
     }
 
-    public static boolean sqlReqAndRespBool(HttpServletRequest req, String sqlQuery, List<String> params, HttpServletResponse resp) throws IOException {
+    public static void sqlReqAndRespBool(HttpServletRequest req, String sql, List<String> params, HttpServletResponse resp) throws IOException {
         try {
-            boolean rs = sqlRequestBool(req, sqlQuery, params);
-            if (!rs) {
-                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                resp.getWriter().println("Error while executing request: " + sqlQuery);
-            }
-            return rs;
+            boolean rs = sqlRequestBool(req, sql, params);
+            // TODO: see why rs is false even if query is executed correctly
+//            if (!rs) {
+//                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+//                resp.getWriter().println("Error while executing request: " + sql);
+//            }
         } catch (ServletException e) {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().println("Exception: " + e.getMessage());
-            return false;
         }
     }
 
-    public static ResultSet sqlReqAndRespSet(HttpServletRequest req, String sqlQuery, List<String> params, HttpServletResponse resp) throws IOException {
+    /**
+     * Execute sql query and return errors in response object (if there is any)
+     * @param req HttpServletRequest object
+     * @param sql Sql query
+     * @param params List of params
+     * @param resp HttpServletResponse object
+     * @return ResultSet obtained from query
+     * @throws IOException if error cannot be written to response object
+     */
+    public static ResultSet sqlReqAndRespSet(HttpServletRequest req, String sql, List<String> params, HttpServletResponse resp) throws IOException {
         try {
-            ResultSet rs = sqlRequestSet(req, sqlQuery, params);
+            ResultSet rs = sqlRequestSet(req, sql, params);
             if (!rs.next()) {
                 resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                resp.getWriter().println("Error while executing request: " + sqlQuery);
+                resp.getWriter().println("Error while executing request: " + sql);
             }
             return rs;
         } catch (ServletException | SQLException e) {
@@ -72,12 +80,12 @@ public class SqlUtils {
         }
     }
 
-    public static boolean sqlRequestBool(HttpServletRequest req, String sqlQuery, List<String> params) throws ServletException {
+    public static boolean sqlRequestBool(HttpServletRequest req, String sql, List<String> params) throws ServletException {
         DataSource pool = getPoolFromReq(req);
         try (Connection conn = pool.getConnection()) {
-            PreparedStatement statement = conn.prepareStatement(sqlQuery);
+            PreparedStatement statement = conn.prepareStatement(sql);
             for (int i = 0; i < params.size(); i++) {
-                statement.setString(i, params.get(i));
+                statement.setString(i+1, params.get(i));
             }
             boolean res = statement.execute();
             statement.close();
@@ -88,12 +96,12 @@ public class SqlUtils {
         }
     }
 
-    public static ResultSet sqlRequestSet(HttpServletRequest req, String sqlQuery, List<String> params) throws ServletException {
+    public static ResultSet sqlRequestSet(HttpServletRequest req, String sql, List<String> params) throws ServletException {
         DataSource pool = getPoolFromReq(req);
         try (Connection conn = pool.getConnection()) {
-            PreparedStatement statement = conn.prepareStatement(sqlQuery);
+            PreparedStatement statement = conn.prepareStatement(sql);
             for (int i = 0; i < params.size(); i++) {
-                statement.setString(i, params.get(i));
+                statement.setString(i+1, params.get(i));
             }
             ResultSet res = statement.executeQuery();
             statement.close();
