@@ -97,9 +97,6 @@ public class DataUserService extends HttpServlet {
                 case "delete-all":
                     handleDeleteAllData(req, resp);
                     break;
-                case "random-stat": // TODO TRIAGON
-                    handleRandomStat(req, resp);
-                    break;
                 default:
                     throw new WrongArgumentException(parsing[2]);
             }
@@ -260,7 +257,6 @@ public class DataUserService extends HttpServlet {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
     }
-
 
     private Message getMessage(HttpServletRequest request) throws IOException {
         String requestBody = request.getReader().lines().collect(Collectors.joining("\n"));

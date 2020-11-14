@@ -83,7 +83,7 @@ public class WSDataServiceUser extends HttpServlet {
             // Send create task request.
             Task task = client.createTask(queuePath, taskBuilder.build());
             resp.setStatus(HttpServletResponse.SC_OK);
-            resp.getWriter().printf("Task created: %s for url %s. You will receive a meil soon.", task.getName(), requestUrl);
+            resp.getWriter().printf("Task created: %s for url %s. You will receive a mail soon.", task.getName(), requestUrl);
         }catch (Exception e){
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().print(e.getMessage());
@@ -110,6 +110,8 @@ public class WSDataServiceUser extends HttpServlet {
 
             publisher.publish(pubsubMessage);
             // redirect to home page
+            resp.setStatus(HttpServletResponse.SC_OK);
+            resp.getWriter().println("Task created: %s for url %s. You will receive a mail soon." + requestUrl);
             resp.sendRedirect("/");
         } catch (Exception e) {
             resp.sendError(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
