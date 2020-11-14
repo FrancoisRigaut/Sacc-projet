@@ -44,6 +44,7 @@ public class DataUserService extends HttpServlet {
                 resp.getWriter().printf("Admin with sha1 %s does not exists", admin.getEmail());
                 return;
             }
+            String sha1;
 
             switch (parsing[2]) {
                 case "count":
@@ -53,13 +54,16 @@ public class DataUserService extends HttpServlet {
                     handleCountPoiUsers(req, resp, admin);
                     break;
                 case "count-position-updates":
-                    String sha1 = req.getParameter("sha1");
+                   sha1 = req.getParameter("sha1");
                     if(sha1 == null)
                         throw new MissingArgumentException("sha1");
                     handleCountPositionUpdates(resp, admin, sha1);
                     break;
                 case "contacted-poi":
-                    countContactedPoi(req, resp, admin);
+                    sha1 = req.getParameter("sha1");
+                    if(sha1 == null)
+                        throw new MissingArgumentException("sha1");
+                    handleCountContactedPoi(resp, admin, sha1);
                     break;
                 default:
                     throw new WrongArgumentException(parsing[2] + " - for url [" + Utils.getCurrentUrl() + "] - and getRequestUrl was [" + req.getRequestURL() + "]");
@@ -186,8 +190,30 @@ public class DataUserService extends HttpServlet {
         }
     }
 
-    private void countContactedPoi(HttpServletRequest req, HttpServletResponse resp, Admin loggedAdmin){
-        System.out.println("Handle count users contacted poi");
+    private void handleCountContactedPoi(HttpServletResponse resp, Admin loggedAdmin, String sha1) throws IOException {
+        Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+
+        Query<Entity> query1 =
+                Query.newEntityQueryBuilder()
+                        .setKind("Meeting")
+                        .setFilter(StructuredQuery.PropertyFilter.eq("meeting_sha1Met", sha1))
+                        .build();
+        QueryResults<Entity> results1 = datastore.run(query1);
+        int cpt = 0;
+        while (results1.hasNext()) {
+            results1.next();
+            cpt++;
+        }
+
+        NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_OK, cpt+"");
+        try {
+            NetUtils.sendResultMail("Number of users contacted by PoI: " + sha1, cpt+"", loggedAdmin);
+        } catch (Exception e) {
+            NetUtils.sendResponseWithCode(resp,
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Error when counting number of contacted PoI: " + e.getMessage()
+            );
+        }
     }
 
     private void handleDeleteAllData(HttpServletRequest req, HttpServletResponse resp) throws IOException {
