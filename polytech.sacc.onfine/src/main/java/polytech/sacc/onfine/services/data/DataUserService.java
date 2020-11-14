@@ -74,11 +74,6 @@ public class DataUserService extends HttpServlet {
         resp.getWriter().print("All data deleted.");
     }
 
-    private void handleCountUsers(HttpServletRequest req, HttpServletResponse resp, Admin loggedAdmin) throws Exception{
-        System.out.println("Handle count users");
-        //NetUtils.sendMail("Ma valeur de test", loggedAdmin);
-    }
-
     private void handleCountPoiUsers(HttpServletRequest req, HttpServletResponse resp, Admin loggedAdmin) throws IOException {
         //Admin entity = (Admin) NetUtils.getGsonEntity(req, Admin.class);
         //List<String> params = Arrays.asList(entity.getEmail());
@@ -108,7 +103,34 @@ public class DataUserService extends HttpServlet {
         }
     }
 
+    private void handleCountUsers(HttpServletRequest req, HttpServletResponse resp, Admin loggedAdmin) throws IOException {
+        Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+
+        Query<Entity> query = Query.newEntityQueryBuilder()
+                .setKind("User")
+                .build();
+        QueryResults<Entity> results = datastore.run(query);
+        int cpt = 0;
+        while (results.hasNext()) {
+            results.next();
+            cpt ++;
+        }
+        NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_OK, cpt+"");
+        try {
+            NetUtils.sendResultMail("Number of users", cpt+"", loggedAdmin);
+        } catch (Exception e) {
+            NetUtils.sendResponseWithCode(resp,
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Error when counting users: " + e.getMessage()
+            );
+        }
+    }
+
     private void countPositionUpdates(HttpServletRequest req, HttpServletResponse resp, Admin loggedAdmin) {
+    }
+
+    private void countContactedPoi(HttpServletRequest req, HttpServletResponse resp, Admin loggedAdmin){
+        System.out.println("Handle count users contacted poi");
     }
 
     private void handleDeleteAllData(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -119,15 +141,15 @@ public class DataUserService extends HttpServlet {
                 .build();
         QueryResults<Entity> results = datastore.run(query);
         while (results.hasNext()) {
-            com.google.cloud.datastore.Entity e = results.next();
+            Entity e = results.next();
             datastore.delete(e.getKey());
         }
-        com.google.cloud.datastore.Query<com.google.cloud.datastore.Entity> query2 = com.google.cloud.datastore.Query.newEntityQueryBuilder()
+        Query<Entity> query2 = Query.newEntityQueryBuilder()
                 .setKind("Meeting")
                 .build();
-        com.google.cloud.datastore.QueryResults<com.google.cloud.datastore.Entity> results2 = datastore.run(query2);
+        QueryResults<Entity> results2 = datastore.run(query2);
         while (results2.hasNext()) {
-            com.google.cloud.datastore.Entity e = results2.next();
+            Entity e = results2.next();
             datastore.delete(e.getKey());
         }
 
@@ -135,13 +157,5 @@ public class DataUserService extends HttpServlet {
         SqlUtils.sqlReqAndRespBool(req, "TRUNCATE TABLE admin", new ArrayList<>(), resp);
 
         NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_OK, "All data deleted.");
-    }
-
-    private void countPositionUpdates(HttpServletResponse resp, Admin loggedAdmin){
-        System.out.println("Handle count users updates");
-    }
-
-    private void countContactedPoi(HttpServletRequest req, HttpServletResponse resp, Admin loggedAdmin){
-        System.out.println("Handle count users contacted poi");
     }
 }

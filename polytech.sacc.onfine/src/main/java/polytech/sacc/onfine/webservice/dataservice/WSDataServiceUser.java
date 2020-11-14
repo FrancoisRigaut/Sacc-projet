@@ -63,7 +63,6 @@ public class WSDataServiceUser extends HttpServlet {
         resp.getWriter().print("All data deleted.");
     }
 
-
     private void handleFastStatsCalculation(HttpServletResponse resp, String requestUrl) throws IOException {
         try (CloudTasksClient client = CloudTasksClient.create()) {
             String queuePath = QueueName.of(Utils.PROJECT_ID, Utils.PROJECT_LOCATION, "sacc-onfine-statistics").toString();
