@@ -4,7 +4,6 @@ import com.google.appengine.repackaged.com.google.gson.Gson;
 import com.google.appengine.repackaged.com.google.gson.JsonObject;
 import com.google.cloud.datastore.*;
 import org.apache.commons.codec.digest.DigestUtils;
-import polytech.sacc.onfine.entity.Admin;
 import polytech.sacc.onfine.tools.Utils;
 import polytech.sacc.onfine.entity.User;
 import polytech.sacc.onfine.entity.exception.WrongArgumentException;
@@ -72,7 +71,7 @@ public class UserService extends HttpServlet {
         try {
             switch (parsing[1]) {
                 case "find-all":
-                    findAll(req, resp);
+                    findAll(resp);
                     break;
                 case "find-all-poi":
                     findAllPoi(req, resp);
@@ -149,7 +148,7 @@ public class UserService extends HttpServlet {
         resp.getWriter().printf("User set to PoI : %s", userEntity.getSha1());
     }
 
-    private void findAll(HttpServletRequest req, HttpServletResponse resp) throws IOException{
+    private void findAll(HttpServletResponse resp) throws IOException{
         Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
         List<User> users = new ArrayList<>();
         Query<Entity> query = Query.newEntityQueryBuilder()
