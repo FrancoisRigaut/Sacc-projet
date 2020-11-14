@@ -32,13 +32,16 @@ public class DataUserService extends HttpServlet {
 
             switch (parsing[2]) {
                 case "count":
-                    handleCountUsers(req, resp, admin);
+                    handleCountUsers(resp, admin);
                     break;
                 case "count-poi":
                     handleCountPoiUsers(req, resp, admin);
                     break;
                 case "count-position-updates":
-                    countPositionUpdates(req, resp, admin);
+                    String sha1 = req.getParameter("sha1");
+                    if(sha1 == null)
+                        throw new MissingArgumentException("sha1");
+                    handleCountPositionUpdates(resp, admin, sha1);
                     break;
                 case "contacted-poi":
                     countContactedPoi(req, resp, admin);
@@ -103,7 +106,7 @@ public class DataUserService extends HttpServlet {
         }
     }
 
-    private void handleCountUsers(HttpServletRequest req, HttpServletResponse resp, Admin loggedAdmin) throws IOException {
+    private void handleCountUsers(HttpServletResponse resp, Admin loggedAdmin) throws IOException {
         Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
 
         Query<Entity> query = Query.newEntityQueryBuilder()
@@ -126,7 +129,30 @@ public class DataUserService extends HttpServlet {
         }
     }
 
-    private void countPositionUpdates(HttpServletRequest req, HttpServletResponse resp, Admin loggedAdmin) {
+    private void handleCountPositionUpdates(HttpServletResponse resp, Admin loggedAdmin, String sha1) throws IOException {
+        Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+
+        Query<Entity> query1 =
+                Query.newEntityQueryBuilder()
+                        .setKind("Meeting")
+                        .setFilter(StructuredQuery.PropertyFilter.eq("meeting_sha1", sha1))
+                        .build();
+        QueryResults<Entity> results1 = datastore.run(query1);
+        int cpt = 0;
+        while (results1.hasNext()) {
+            results1.next();
+            cpt++;
+        }
+
+        NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_OK, cpt+"");
+        try {
+            NetUtils.sendResultMail("Number of position updates for user " + sha1, cpt+"", loggedAdmin);
+        } catch (Exception e) {
+            NetUtils.sendResponseWithCode(resp,
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Error when counting number of position updates: " + e.getMessage()
+            );
+        }
     }
 
     private void countContactedPoi(HttpServletRequest req, HttpServletResponse resp, Admin loggedAdmin){
