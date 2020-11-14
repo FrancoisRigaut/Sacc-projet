@@ -1,11 +1,11 @@
 package polytech.sacc.onfine.webservice.dataservice;
 
-import com.google.appengine.repackaged.com.google.gson.Gson;
 import com.google.appengine.repackaged.com.google.gson.JsonObject;
 import com.google.cloud.tasks.v2.*;
 import polytech.sacc.onfine.entity.exception.WrongArgumentException;
 import polytech.sacc.onfine.tools.Utils;
 import polytech.sacc.onfine.tools.UtilsResponse;
+import polytech.sacc.onfine.utils.NetUtils;
 
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -13,7 +13,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.stream.Collectors;
 
 import com.google.cloud.ServiceOptions;
 import com.google.cloud.pubsub.v1.Publisher;
@@ -50,13 +49,13 @@ public class WSDataServiceUser extends HttpServlet {
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String requestURL = req.getRequestURL().toString().replace(Utils.getCurrentUrl() + "/ws/", "");
         String[] parsing = requestURL.split("/");
         try {
             switch (parsing[2]) {
                 case "delete-all":
-                    handleDeleteAll(req, resp, "/stats/users/delete-all");
+                    handleDeleteAll(req, resp);
                     break;
                 case "random-stat": // TODO TRIAGON
                     handleRandomStat(req, resp, "/stats/users/random-stat");
@@ -100,20 +99,19 @@ public class WSDataServiceUser extends HttpServlet {
         System.out.println("Long : " + requestUrl);
     }
 
-    private void handleDeleteAll(HttpServletRequest req, HttpServletResponse resp, String requestUrl) throws IOException {
-        // Maybe add switchCase
-        JsonObject jsonObject = new Gson().fromJson(req.getReader().lines().collect(Collectors.joining(System.lineSeparator())), JsonObject.class);
+    private void handleDeleteAll(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        JsonObject jsonObject = (JsonObject) NetUtils.getGsonEntity(req, JsonObject.class);
 
         try{
-            UtilsResponse res = Utils.makeRequest(Utils.getCurrentUrl() + requestUrl,
+            UtilsResponse res = Utils.makeRequest(Utils.getCurrentUrl() + "/stats/users/delete-all",
                     jsonObject.toString().getBytes(StandardCharsets.UTF_8),
-                    Utils.RequestType.POST);
+                    Utils.RequestType.DELETE);
 
             resp.setStatus(res.getResponseCode());
             resp.getWriter().print(res.getResponse());
         }catch (Exception e){
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            resp.getWriter().println("Error 1");
+            resp.getWriter().println("Error when deleting data");
             resp.getWriter().print(e.getMessage());
         }
     }

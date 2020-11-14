@@ -4,6 +4,7 @@ import com.google.appengine.repackaged.com.google.gson.Gson;
 import com.google.cloud.datastore.*;
 import polytech.sacc.onfine.entity.Gps;
 import polytech.sacc.onfine.entity.Meeting;
+import polytech.sacc.onfine.utils.NetUtils;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -17,7 +18,7 @@ import java.util.stream.Collectors;
 public class MeetingService extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        Meeting meeting = new Gson().fromJson(req.getReader().lines().collect(Collectors.joining(System.lineSeparator())), Meeting.class);
+        Meeting meeting = (Meeting) NetUtils.getGsonEntity(req, Meeting.class);
         System.out.println(meeting);
 
         Datastore datastore = connectToDatastore();
