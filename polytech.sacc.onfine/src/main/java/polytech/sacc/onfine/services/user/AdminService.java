@@ -60,10 +60,10 @@ public class AdminService extends HttpServlet {
             statement.setString(1, adminEntity.getEmail());
             boolean inserted = statement.execute();
             statement.close();
-            if(!inserted) {
-                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                throw new RuntimeException("The admin can not be inserted");
-            }
+//            if(!inserted) {
+//                resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+//                throw new RuntimeException("The admin can not be inserted");
+//            }
             resp.setStatus(HttpServletResponse.SC_CREATED);
             resp.getWriter().print("Ok");
         } catch (SQLException ex) {
