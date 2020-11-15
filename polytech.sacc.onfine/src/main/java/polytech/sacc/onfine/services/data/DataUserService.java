@@ -69,7 +69,7 @@ public class DataUserService extends HttpServlet {
                     handleCountPoiUsers(req, resp, admin);
                     break;
                 case "count-position-updates":
-                    handleCountPositionUpdates(req, resp, admin);
+                    handleCountPositionUpdates(resp, admin);
                     break;
                 default:
                     throw new WrongArgumentException(parsing[2] + " - for url [" + Utils.getCurrentUrl() + "] - and getRequestUrl was [" + req.getRequestURL() + "]");
