@@ -68,6 +68,9 @@ public class DataUserService extends HttpServlet {
                 case "count-poi":
                     handleCountPoiUsers(req, resp, admin);
                     break;
+                case "count-position-updates":
+                    handleCountPositionUpdates(req, resp, admin);
+                    break;
                 default:
                     throw new WrongArgumentException(parsing[2] + " - for url [" + Utils.getCurrentUrl() + "] - and getRequestUrl was [" + req.getRequestURL() + "]");
             }
@@ -227,13 +230,12 @@ public class DataUserService extends HttpServlet {
         }
     }
 
-    private void handleCountPositionUpdates(HttpServletResponse resp, Admin loggedAdmin, String sha1) throws IOException {
+    private void handleCountPositionUpdates(HttpServletResponse resp, Admin loggedAdmin) throws IOException {
         Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
 
         Query<Entity> query1 =
                 Query.newEntityQueryBuilder()
                         .setKind("Meeting")
-                        .setFilter(StructuredQuery.PropertyFilter.eq("meeting_sha1", sha1))
                         .build();
         QueryResults<Entity> results1 = datastore.run(query1);
         int cpt = 0;
@@ -244,7 +246,7 @@ public class DataUserService extends HttpServlet {
 
         NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_OK, cpt+"");
         try {
-            NetUtils.sendResultMail("Number of position updates for user " + sha1, cpt+"", loggedAdmin);
+            NetUtils.sendResultMail("Number of position updates", cpt+"", loggedAdmin);
         } catch (Exception e) {
             NetUtils.sendResponseWithCode(resp,
                     HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
