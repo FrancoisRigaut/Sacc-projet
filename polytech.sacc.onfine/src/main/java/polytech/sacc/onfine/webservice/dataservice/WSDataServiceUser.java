@@ -37,7 +37,7 @@ public class WSDataServiceUser extends HttpServlet {
                     break;
                 case "count-position-updates":
                 case "contacted-poi":
-                    handleLongStatsCalculation(req, resp, "/" + requestURL + "?" + req.getQueryString());
+                    handleLongStatsCalculation(req, resp, parsing[2]);
                     break;
                 default:
                     throw new WrongArgumentException(parsing[2]);
@@ -87,6 +87,42 @@ public class WSDataServiceUser extends HttpServlet {
         }
     }
 
+    private void handleLongStatsCalculation(HttpServletRequest req, HttpServletResponse resp, String topicId) throws IOException {
+        Publisher publisher = this.publisher;
+        try {
+            // create a publisher on the topic
+            if (publisher == null) {
+                ProjectTopicName topicName =
+                        ProjectTopicName.newBuilder()
+                                .setProject(ServiceOptions.getDefaultProjectId())
+                                .setTopic(topicId)
+                                .build();
+                publisher = Publisher.newBuilder(topicName).build();
+            }
+
+            JsonObject jsonObject = new JsonObject();
+            for (String param : req.getParameterMap().keySet()) {
+                System.out.println(param + " - " + req.getParameter(param));
+                jsonObject.addProperty(param, req.getParameter(param));
+            }
+            String payload = jsonObject.toString();
+            PubsubMessage pubsubMessage =
+                    PubsubMessage.newBuilder().setData(ByteString.copyFromUtf8(payload)).build();
+
+            publisher.publish(pubsubMessage);
+            NetUtils.sendResponseWithCode(resp,
+                    HttpServletResponse.SC_OK,
+                    "Pub sub message launched with payload " + payload + " on topic " + topicId
+            );
+
+        } catch (Exception e) {
+            NetUtils.sendResponseWithCode(resp,
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    e+" - catched in WS"
+            );
+        }
+    }
+
     private void handleDeleteAll(HttpServletRequest req, HttpServletResponse resp, String requestURL) throws IOException {
         JsonObject jsonObject = (JsonObject) NetUtils.getGsonEntity(req, JsonObject.class);
         try{
@@ -98,34 +134,6 @@ public class WSDataServiceUser extends HttpServlet {
         }catch (Exception e){
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().print(e.getMessage());
-        }
-    }
-
-    private void handleLongStatsCalculation(HttpServletRequest req, HttpServletResponse resp, String requestUrl) throws IOException {
-        Publisher publisher = this.publisher;
-        try {
-            String topicId = System.getenv("PUBSUB_TOPIC");
-            // create a publisher on the topic
-            if (publisher == null) {
-                ProjectTopicName topicName =
-                        ProjectTopicName.newBuilder()
-                                .setProject(ServiceOptions.getDefaultProjectId())
-                                .setTopic(topicId)
-                                .build();
-                publisher = Publisher.newBuilder(topicName).build();
-            }
-            // construct a pubsub message from the payload
-            final String payload = req.getParameter("payload");
-            PubsubMessage pubsubMessage =
-                    PubsubMessage.newBuilder().setData(ByteString.copyFromUtf8(payload)).build();
-
-            publisher.publish(pubsubMessage);
-            // redirect to home page
-            resp.setStatus(HttpServletResponse.SC_OK);
-            resp.getWriter().println("Task created: %s for url %s. You will receive a mail soon." + requestUrl);
-            resp.sendRedirect("/");
-        } catch (Exception e) {
-            resp.sendError(HttpStatus.SC_INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }
 

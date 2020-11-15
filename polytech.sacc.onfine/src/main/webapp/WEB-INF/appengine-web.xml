@@ -8,7 +8,6 @@
     </system-properties>
 
     <env-variables>
-        <env-var name="PUBSUB_TOPIC" value="stats" />
         <env-var name="PUBSUB_VERIFICATION_TOKEN" value="sacc" />
     </env-variables>
 </appengine-web-app>

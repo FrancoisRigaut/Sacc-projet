@@ -1,11 +1,14 @@
 package polytech.sacc.onfine.services.data;
 
+import com.google.api.client.json.Json;
+import com.google.appengine.repackaged.com.google.gson.JsonObject;
 import polytech.sacc.onfine.entity.Message;
 import com.google.appengine.repackaged.com.google.gson.Gson;
 import com.google.appengine.repackaged.com.google.gson.JsonElement;
 import com.google.appengine.repackaged.com.google.gson.JsonParser;
 import com.google.cloud.datastore.*;
 import polytech.sacc.onfine.entity.MessageRepository;
+import polytech.sacc.onfine.entity.User;
 import polytech.sacc.onfine.utils.NetUtils;
 import polytech.sacc.onfine.utils.SqlUtils;
 import polytech.sacc.onfine.tools.Utils;
@@ -13,22 +16,34 @@ import polytech.sacc.onfine.entity.Admin;
 import polytech.sacc.onfine.entity.exception.MissingArgumentException;
 import polytech.sacc.onfine.entity.exception.WrongArgumentException;
 
+import javax.mail.MessagingException;
+import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @WebServlet(name = "DataServiceUser", value = "/stats/users/*")
 public class DataUserService extends HttpServlet {
+
+    private final Gson gson = new Gson();
+    private final JsonParser jsonParser = new JsonParser();
+
+    public DataUserService(){
+
+    }
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String requestURL = Utils.removeCurrentUrlFromRequestUrl(req.getRequestURL().toString());
@@ -53,18 +68,6 @@ public class DataUserService extends HttpServlet {
                 case "count-poi":
                     handleCountPoiUsers(req, resp, admin);
                     break;
-                case "count-position-updates":
-                   sha1 = req.getParameter("sha1");
-                    if(sha1 == null)
-                        throw new MissingArgumentException("sha1");
-                    handleCountPositionUpdates(resp, admin, sha1);
-                    break;
-                case "contacted-poi":
-                    sha1 = req.getParameter("sha1");
-                    if(sha1 == null)
-                        throw new MissingArgumentException("sha1");
-                    handleCountContactedPoi(resp, admin, sha1);
-                    break;
                 default:
                     throw new WrongArgumentException(parsing[2] + " - for url [" + Utils.getCurrentUrl() + "] - and getRequestUrl was [" + req.getRequestURL() + "]");
             }
@@ -73,6 +76,54 @@ public class DataUserService extends HttpServlet {
             resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             resp.getWriter().print(e.getMessage());
         }
+    }
+
+    @Override
+    public void doPost(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException, ServletException {
+        String requestURL = Utils.removeCurrentUrlFromRequestUrl(req.getRequestURL().toString());
+        String[] parsing = requestURL.split("/");
+
+        try {
+            switch (parsing[2]) {
+                case "contacted-poi":
+                    if (verifyToken(req, resp, parsing[2])) {
+                        Message message = getMessage(req);
+                        JsonObject jsonObject = new Gson().fromJson(message.getData(), JsonObject.class);
+                        Admin admin = new Admin(jsonObject.get("admin").getAsString());
+                        String sha1 = jsonObject.get("sha1").getAsString();
+                        handleContactedPoi(resp, admin, sha1);
+                    }
+                    break;
+            }
+        } catch (Exception e) {
+            NetUtils.sendResponseWithCode(resp,
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    e.getMessage()
+            );
+        }
+    }
+
+    private boolean verifyToken(HttpServletRequest req, HttpServletResponse resp, String topic) {
+        String pubsubVerificationToken = System.getenv("PUBSUB_VERIFICATION_TOKEN");
+        // Do not process message if request token does not match pubsubVerificationToken
+        try {
+            if (req.getParameter("token") != null) {
+                if (req.getParameter("token").compareTo(pubsubVerificationToken) != 0) {
+                    NetUtils.sendErrorMail(topic, "Error: wrong token given in message", new Admin("triagonforce@gmail.com"));
+                    NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error: wrong token given in message");
+                    return false;
+                }
+            } else {
+                NetUtils.sendErrorMail(topic, "Error: missing token in message", new Admin("triagonforce@gmail.com"));
+                NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error: missing token in message");
+                return false;
+            }
+        } catch (IOException | MessagingException e) {
+            e.printStackTrace();
+            return false;
+        }
+        return true;
     }
 
     private boolean isAnAdmin(HttpServletRequest req, Admin adminEntity) throws SQLException{
@@ -86,6 +137,21 @@ public class DataUserService extends HttpServlet {
             return res.getInt("numberAdmin") > 0;
         }
         return false;
+    }
+
+    private Message getMessage(HttpServletRequest request) throws IOException {
+        String requestBody = request.getReader().lines().collect(Collectors.joining("\n"));
+        JsonElement jsonRoot = jsonParser.parse(requestBody);
+        String messageStr = jsonRoot.getAsJsonObject().get("message").toString();
+        Message message = gson.fromJson(messageStr, Message.class);
+        // decode from base64
+        String decoded = decode(message.getData());
+        message.setData(decoded);
+        return message;
+    }
+
+    private String decode(String data) {
+        return new String(Base64.getDecoder().decode(data));
     }
 
     @Override
@@ -187,28 +253,28 @@ public class DataUserService extends HttpServlet {
         }
     }
 
-    private void handleCountContactedPoi(HttpServletResponse resp, Admin loggedAdmin, String sha1) throws IOException {
-        Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
-
-        Query<Entity> query1 =
-                Query.newEntityQueryBuilder()
-                        .setKind("Meeting")
-                        .setFilter(StructuredQuery.PropertyFilter.eq("meeting_sha1Met", sha1))
-                        .build();
-        QueryResults<Entity> results1 = datastore.run(query1);
-        int cpt = 0;
-        while (results1.hasNext()) {
-            results1.next();
-            cpt++;
-        }
-
-        NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_OK, cpt+"");
+    private void handleContactedPoi(HttpServletResponse resp, Admin loggedAdmin, String sha1) throws IOException {
         try {
-            NetUtils.sendResultMail("Number of users contacted by PoI: " + sha1, cpt+"", loggedAdmin);
+            Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+
+            Query<Entity> query =
+                    Query.newEntityQueryBuilder()
+                            .setKind("Meeting")
+                            .setFilter(StructuredQuery.PropertyFilter.eq("meeting_sha1", sha1))
+                            .build();
+            QueryResults<Entity> results = datastore.run(query);
+            List<User> users = new ArrayList<>();
+            while (results.hasNext()) {
+                Entity entity = results.next();
+                users.add(new User(entity.getString("meeting_sha1Met")));
+            }
+
+            NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_OK, users.toString());
+            NetUtils.sendResultMail("List of users contacted by PoI: " + sha1, users.toString(), loggedAdmin);
         } catch (Exception e) {
             NetUtils.sendResponseWithCode(resp,
                     HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    "Error when counting number of contacted PoI: " + e.getMessage()
+                    "Error when getting list of contacted PoI: " + e.getMessage()
             );
         }
     }
@@ -237,51 +303,5 @@ public class DataUserService extends HttpServlet {
         SqlUtils.sqlReqAndRespBool(req, "TRUNCATE TABLE admin", new ArrayList<>(), resp);
 
         NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_OK, "All data deleted.");
-    }
-
-    private void handleRandomStat(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String pubsubVerificationToken = System.getenv("PUBSUB_VERIFICATION_TOKEN");
-        // Do not process message if request token does not match pubsubVerificationToken
-        if (req.getParameter("token").compareTo(pubsubVerificationToken) != 0) {
-            resp.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            return;
-        }
-        // parse message object from "message" field in the request body json
-        // decode message data from base64
-        Message message = getMessage(req);
-        try {
-            messageRepository.save(message);
-            // 200, 201, 204, 102 status codes are interpreted as success by the Pub/Sub system
-            resp.setStatus(102);
-        } catch (Exception e) {
-            resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    private Message getMessage(HttpServletRequest request) throws IOException {
-        String requestBody = request.getReader().lines().collect(Collectors.joining("\n"));
-        JsonElement jsonRoot = jsonParser.parse(requestBody);
-        String messageStr = jsonRoot.getAsJsonObject().get("message").toString();
-        Message message = gson.fromJson(messageStr, Message.class);
-        // decode from base64
-        String decoded = decode(message.getData());
-        message.setData(decoded);
-        return message;
-    }
-
-    private String decode(String data) {
-        return new String(Base64.getDecoder().decode(data));
-    }
-
-    private final Gson gson = new Gson();
-    private final JsonParser jsonParser = new JsonParser();
-    private MessageRepository messageRepository;
-
-    public DataUserService(){
-
-    }
-
-    public DataUserService(MessageRepository messageRepository) {
-        this.messageRepository = messageRepository;
     }
 }
