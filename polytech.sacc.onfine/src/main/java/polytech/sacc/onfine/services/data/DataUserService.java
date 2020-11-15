@@ -87,6 +87,14 @@ public class DataUserService extends HttpServlet {
                         handleContactedUsers(resp, admin, sha1);
                     }
                     break;
+                case "users-who-met-poi":
+                    if (verifyToken(req, resp, parsing[2])) {
+                        Message message = NetUtils.getMessage(req);
+                        JsonObject jsonObject = new Gson().fromJson(message.getData(), JsonObject.class);
+                        Admin admin = new Admin(jsonObject.get("admin").getAsString());
+                        handleUsersWhoMetPoi(resp, admin);
+                    }
+                    break;
             }
         } catch (Exception e) {
             NetUtils.sendResponseWithCode(resp,
@@ -256,6 +264,37 @@ public class DataUserService extends HttpServlet {
                     "Error when getting list of contacted user: " + e.getMessage()
             );
         }
+    }
+
+    private void handleUsersWhoMetPoi(HttpServletResponse resp, Admin loggedAdmin) throws IOException {
+//        try {
+//            Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+//
+//            Query<Entity> query =
+//                    Query.newEntityQueryBuilder()
+//                            .setKind("Meeting")
+//                            .setFilter(StructuredQuery.PropertyFilter.eq("meeting_sha1", sha1))
+//                            .build();
+//            QueryResults<Entity> results = datastore.run(query);
+//            List<JsonObject> users = new ArrayList<>();
+//            while (results.hasNext()) {
+//                Entity entity = results.next();
+//                JsonObject jsonUser = new JsonObject();
+//                jsonUser.addProperty("sha1Met", entity.getString("meeting_sha1Met"));
+//                jsonUser.addProperty("latitude", entity.getDouble("meeting_gps_latitude"));
+//                jsonUser.addProperty("longitude", entity.getDouble("meeting_gps_longitude"));
+//                jsonUser.addProperty("timestamp", entity.getString("meeting_timestamp"));
+//                users.add(jsonUser);
+//            }
+//
+//            NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_OK, users.toString());
+//            NetUtils.sendResultMail("List of users contacted by user: " + sha1, users.toString(), loggedAdmin);
+//        } catch (Exception e) {
+//            NetUtils.sendResponseWithCode(resp,
+//                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+//                    "Error when getting list of contacted user: " + e.getMessage()
+//            );
+//        }
     }
 
     private void handleDeleteAllData(HttpServletRequest req, HttpServletResponse resp) throws IOException {
