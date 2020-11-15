@@ -1,13 +1,9 @@
 package polytech.sacc.onfine.services.data;
 
-import com.google.api.client.json.Json;
 import com.google.appengine.repackaged.com.google.gson.JsonObject;
 import polytech.sacc.onfine.entity.Message;
 import com.google.appengine.repackaged.com.google.gson.Gson;
-import com.google.appengine.repackaged.com.google.gson.JsonElement;
-import com.google.appengine.repackaged.com.google.gson.JsonParser;
 import com.google.cloud.datastore.*;
-import polytech.sacc.onfine.entity.MessageRepository;
 import polytech.sacc.onfine.entity.User;
 import polytech.sacc.onfine.utils.NetUtils;
 import polytech.sacc.onfine.utils.SqlUtils;
@@ -24,21 +20,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @WebServlet(name = "DataServiceUser", value = "/stats/users/*")
 public class DataUserService extends HttpServlet {
-
-    private final Gson gson = new Gson();
-    private final JsonParser jsonParser = new JsonParser();
 
     public DataUserService(){
 
@@ -59,7 +49,6 @@ public class DataUserService extends HttpServlet {
                 resp.getWriter().printf("Admin with sha1 %s does not exists", admin.getEmail());
                 return;
             }
-            String sha1;
 
             switch (parsing[2]) {
                 case "count":
@@ -67,6 +56,9 @@ public class DataUserService extends HttpServlet {
                     break;
                 case "count-poi":
                     handleCountPoiUsers(req, resp, admin);
+                    break;
+                case "count-position-updates":
+                    handleCountPositionUpdates(resp, admin);
                     break;
                 default:
                     throw new WrongArgumentException(parsing[2] + " - for url [" + Utils.getCurrentUrl() + "] - and getRequestUrl was [" + req.getRequestURL() + "]");
@@ -88,11 +80,19 @@ public class DataUserService extends HttpServlet {
             switch (parsing[2]) {
                 case "contacted-users":
                     if (verifyToken(req, resp, parsing[2])) {
-                        Message message = getMessage(req);
+                        Message message = NetUtils.getMessage(req);
                         JsonObject jsonObject = new Gson().fromJson(message.getData(), JsonObject.class);
                         Admin admin = new Admin(jsonObject.get("admin").getAsString());
                         String sha1 = jsonObject.get("sha1").getAsString();
                         handleContactedUsers(resp, admin, sha1);
+                    }
+                    break;
+                case "users-who-met-poi":
+                    if (verifyToken(req, resp, parsing[2])) {
+                        Message message = NetUtils.getMessage(req);
+                        JsonObject jsonObject = new Gson().fromJson(message.getData(), JsonObject.class);
+                        Admin admin = new Admin(jsonObject.get("admin").getAsString());
+                        handleUsersWhoMetPoi(resp, admin);
                     }
                     break;
             }
@@ -110,16 +110,14 @@ public class DataUserService extends HttpServlet {
         try {
             if (req.getParameter("token") != null) {
                 if (req.getParameter("token").compareTo(pubsubVerificationToken) != 0) {
-                    NetUtils.sendErrorMail(topic, "Error: wrong token given in message", new Admin("triagonforce@gmail.com"));
                     NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error: wrong token given in message");
                     return false;
                 }
             } else {
-                NetUtils.sendErrorMail(topic, "Error: missing token in message", new Admin("triagonforce@gmail.com"));
                 NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error: missing token in message");
                 return false;
             }
-        } catch (IOException | MessagingException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             return false;
         }
@@ -137,21 +135,6 @@ public class DataUserService extends HttpServlet {
             return res.getInt("numberAdmin") > 0;
         }
         return false;
-    }
-
-    private Message getMessage(HttpServletRequest request) throws IOException {
-        String requestBody = request.getReader().lines().collect(Collectors.joining("\n"));
-        JsonElement jsonRoot = jsonParser.parse(requestBody);
-        String messageStr = jsonRoot.getAsJsonObject().get("message").toString();
-        Message message = gson.fromJson(messageStr, Message.class);
-        // decode from base64
-        String decoded = decode(message.getData());
-        message.setData(decoded);
-        return message;
-    }
-
-    private String decode(String data) {
-        return new String(Base64.getDecoder().decode(data));
     }
 
     @Override
@@ -227,13 +210,12 @@ public class DataUserService extends HttpServlet {
         }
     }
 
-    private void handleCountPositionUpdates(HttpServletResponse resp, Admin loggedAdmin, String sha1) throws IOException {
+    private void handleCountPositionUpdates(HttpServletResponse resp, Admin loggedAdmin) throws IOException {
         Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
 
         Query<Entity> query1 =
                 Query.newEntityQueryBuilder()
                         .setKind("Meeting")
-                        .setFilter(StructuredQuery.PropertyFilter.eq("meeting_sha1", sha1))
                         .build();
         QueryResults<Entity> results1 = datastore.run(query1);
         int cpt = 0;
@@ -244,7 +226,7 @@ public class DataUserService extends HttpServlet {
 
         NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_OK, cpt+"");
         try {
-            NetUtils.sendResultMail("Number of position updates for user " + sha1, cpt+"", loggedAdmin);
+            NetUtils.sendResultMail("Number of position updates", cpt+"", loggedAdmin);
         } catch (Exception e) {
             NetUtils.sendResponseWithCode(resp,
                     HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
@@ -263,10 +245,15 @@ public class DataUserService extends HttpServlet {
                             .setFilter(StructuredQuery.PropertyFilter.eq("meeting_sha1", sha1))
                             .build();
             QueryResults<Entity> results = datastore.run(query);
-            List<User> users = new ArrayList<>();
+            List<JsonObject> users = new ArrayList<>();
             while (results.hasNext()) {
                 Entity entity = results.next();
-                users.add(new User(entity.getString("meeting_sha1Met")));
+                JsonObject jsonUser = new JsonObject();
+                jsonUser.addProperty("sha1Met", entity.getString("meeting_sha1Met"));
+                jsonUser.addProperty("latitude", entity.getDouble("meeting_gps_latitude"));
+                jsonUser.addProperty("longitude", entity.getDouble("meeting_gps_longitude"));
+                jsonUser.addProperty("timestamp", entity.getString("meeting_timestamp"));
+                users.add(jsonUser);
             }
 
             NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_OK, users.toString());
@@ -277,6 +264,37 @@ public class DataUserService extends HttpServlet {
                     "Error when getting list of contacted user: " + e.getMessage()
             );
         }
+    }
+
+    private void handleUsersWhoMetPoi(HttpServletResponse resp, Admin loggedAdmin) throws IOException {
+//        try {
+//            Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+//
+//            Query<Entity> query =
+//                    Query.newEntityQueryBuilder()
+//                            .setKind("Meeting")
+//                            .setFilter(StructuredQuery.PropertyFilter.eq("meeting_sha1", sha1))
+//                            .build();
+//            QueryResults<Entity> results = datastore.run(query);
+//            List<JsonObject> users = new ArrayList<>();
+//            while (results.hasNext()) {
+//                Entity entity = results.next();
+//                JsonObject jsonUser = new JsonObject();
+//                jsonUser.addProperty("sha1Met", entity.getString("meeting_sha1Met"));
+//                jsonUser.addProperty("latitude", entity.getDouble("meeting_gps_latitude"));
+//                jsonUser.addProperty("longitude", entity.getDouble("meeting_gps_longitude"));
+//                jsonUser.addProperty("timestamp", entity.getString("meeting_timestamp"));
+//                users.add(jsonUser);
+//            }
+//
+//            NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_OK, users.toString());
+//            NetUtils.sendResultMail("List of users contacted by user: " + sha1, users.toString(), loggedAdmin);
+//        } catch (Exception e) {
+//            NetUtils.sendResponseWithCode(resp,
+//                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+//                    "Error when getting list of contacted user: " + e.getMessage()
+//            );
+//        }
     }
 
     private void handleDeleteAllData(HttpServletRequest req, HttpServletResponse resp) throws IOException {
