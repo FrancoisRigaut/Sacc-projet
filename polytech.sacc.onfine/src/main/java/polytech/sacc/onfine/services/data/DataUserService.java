@@ -1,14 +1,12 @@
 package polytech.sacc.onfine.services.data;
 
 import com.google.appengine.repackaged.com.google.gson.JsonObject;
-import polytech.sacc.onfine.entity.Message;
+import polytech.sacc.onfine.entity.*;
 import com.google.appengine.repackaged.com.google.gson.Gson;
 import com.google.cloud.datastore.*;
-import polytech.sacc.onfine.entity.User;
 import polytech.sacc.onfine.utils.NetUtils;
 import polytech.sacc.onfine.utils.SqlUtils;
 import polytech.sacc.onfine.tools.Utils;
-import polytech.sacc.onfine.entity.Admin;
 import polytech.sacc.onfine.entity.exception.MissingArgumentException;
 import polytech.sacc.onfine.entity.exception.WrongArgumentException;
 
@@ -25,7 +23,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @WebServlet(name = "DataServiceUser", value = "/stats/users/*")
 public class DataUserService extends HttpServlet {
@@ -92,7 +93,7 @@ public class DataUserService extends HttpServlet {
                         Message message = NetUtils.getMessage(req);
                         JsonObject jsonObject = new Gson().fromJson(message.getData(), JsonObject.class);
                         Admin admin = new Admin(jsonObject.get("admin").getAsString());
-                        handleUsersWhoMetPoi(resp, admin);
+                        handleUsersWhoMetPoi(req, resp, admin);
                     }
                     break;
             }
@@ -266,35 +267,65 @@ public class DataUserService extends HttpServlet {
         }
     }
 
-    private void handleUsersWhoMetPoi(HttpServletResponse resp, Admin loggedAdmin) throws IOException {
-//        try {
-//            Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
-//
-//            Query<Entity> query =
-//                    Query.newEntityQueryBuilder()
-//                            .setKind("Meeting")
-//                            .setFilter(StructuredQuery.PropertyFilter.eq("meeting_sha1", sha1))
-//                            .build();
-//            QueryResults<Entity> results = datastore.run(query);
-//            List<JsonObject> users = new ArrayList<>();
-//            while (results.hasNext()) {
-//                Entity entity = results.next();
-//                JsonObject jsonUser = new JsonObject();
-//                jsonUser.addProperty("sha1Met", entity.getString("meeting_sha1Met"));
-//                jsonUser.addProperty("latitude", entity.getDouble("meeting_gps_latitude"));
-//                jsonUser.addProperty("longitude", entity.getDouble("meeting_gps_longitude"));
-//                jsonUser.addProperty("timestamp", entity.getString("meeting_timestamp"));
-//                users.add(jsonUser);
-//            }
-//
-//            NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_OK, users.toString());
-//            NetUtils.sendResultMail("List of users contacted by user: " + sha1, users.toString(), loggedAdmin);
-//        } catch (Exception e) {
-//            NetUtils.sendResponseWithCode(resp,
-//                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-//                    "Error when getting list of contacted user: " + e.getMessage()
-//            );
-//        }
+    private void handleUsersWhoMetPoi(HttpServletRequest req, HttpServletResponse resp, Admin loggedAdmin) throws IOException {
+        try {
+            Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
+
+            Query<Entity> query =
+                    Query.newEntityQueryBuilder()
+                            .setKind("Meeting")
+                            .build();
+            QueryResults<Entity> results = datastore.run(query);
+            List<Meeting> meetings = new ArrayList<>();
+            while (results.hasNext()) {
+                Entity entity = results.next();
+                Meeting meeting = new Meeting();
+                meeting.setSha1Met(entity.getString("meeting_sha1Met"));
+                meeting.setSha1(entity.getString("meeting_sha1"));
+                meeting.setTimestamp(entity.getString("meeting_timestamp"));
+                meeting.setGps(
+                        new Gps(
+                                (float)entity.getDouble("meeting_gps_latitude"),
+                                (float)entity.getDouble("meeting_gps_longitude")
+                        )
+                );
+                meetings.add(meeting);
+            }
+
+            List<String> pois = new ArrayList<>();
+            try {
+                ResultSet rs = SqlUtils.sqlReqAndMailSet(req, "SELECT sha1 AS sha1 FROM user_poi", new ArrayList<>(), loggedAdmin);
+                if (rs == null) { // In case of error, mail is already sent in sqlReqAndMail function
+                    NetUtils.sendResponseWithCode(resp,
+                            HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                            "Error when fetching users : Result was null"
+                    );
+                } else {
+                    while (rs.next()) {
+                        pois.add(rs.getString(1));
+                    }
+                    Set<String> resultList = new HashSet<>();
+                    for (Meeting m : meetings) {
+                        if (pois.contains(m.getSha1Met())) {
+                            resultList.add(m.getSha1());
+                        }
+                    }
+                    NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_OK, resultList.toString());
+                    NetUtils.sendResultMail("List of users who met a PoI : ", resultList.toString(), loggedAdmin);
+                }
+            } catch (Exception e) {
+                NetUtils.sendResponseWithCode(resp,
+                        HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        "Error when fetching users: " + e.getMessage()
+                );
+            }
+
+        } catch (Exception e) {
+            NetUtils.sendResponseWithCode(resp,
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Error when getting users who met a PoI : " + e.getMessage()
+            );
+        }
     }
 
     private void handleDeleteAllData(HttpServletRequest req, HttpServletResponse resp) throws IOException {
