@@ -1,6 +1,8 @@
 package polytech.sacc.onfine.utils;
 
 import com.google.appengine.repackaged.com.google.gson.Gson;
+import com.google.appengine.repackaged.com.google.gson.JsonElement;
+import com.google.appengine.repackaged.com.google.gson.JsonParser;
 import polytech.sacc.onfine.entity.Admin;
 
 import javax.mail.Message;
@@ -13,10 +15,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.Base64;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
 public class NetUtils {
+
+    private static final Gson gson = new Gson();
+    private static final JsonParser jsonParser = new JsonParser();
+
     public static Object getGsonEntity(HttpServletRequest req, Class c) throws IOException {
         return new Gson().fromJson(req.getReader().lines().collect(Collectors.joining(System.lineSeparator())), c);
     }
@@ -49,5 +56,20 @@ public class NetUtils {
     public static void sendResponseWithCode(HttpServletResponse resp, int httpCode, String content) throws IOException {
         resp.setStatus(httpCode);
         resp.getWriter().print(content);
+    }
+
+    public static polytech.sacc.onfine.entity.Message getMessage(HttpServletRequest request) throws IOException {
+        String requestBody = request.getReader().lines().collect(Collectors.joining("\n"));
+        JsonElement jsonRoot = jsonParser.parse(requestBody);
+        String messageStr = jsonRoot.getAsJsonObject().get("message").toString();
+        polytech.sacc.onfine.entity.Message message = gson.fromJson(messageStr, polytech.sacc.onfine.entity.Message.class);
+        // decode from base64
+        String decoded = decode(message.getData());
+        message.setData(decoded);
+        return message;
+    }
+
+    public static String decode(String data) {
+        return new String(Base64.getDecoder().decode(data));
     }
 }

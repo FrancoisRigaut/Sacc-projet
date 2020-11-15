@@ -1,13 +1,9 @@
 package polytech.sacc.onfine.services.data;
 
-import com.google.api.client.json.Json;
 import com.google.appengine.repackaged.com.google.gson.JsonObject;
 import polytech.sacc.onfine.entity.Message;
 import com.google.appengine.repackaged.com.google.gson.Gson;
-import com.google.appengine.repackaged.com.google.gson.JsonElement;
-import com.google.appengine.repackaged.com.google.gson.JsonParser;
 import com.google.cloud.datastore.*;
-import polytech.sacc.onfine.entity.MessageRepository;
 import polytech.sacc.onfine.entity.User;
 import polytech.sacc.onfine.utils.NetUtils;
 import polytech.sacc.onfine.utils.SqlUtils;
@@ -24,21 +20,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @WebServlet(name = "DataServiceUser", value = "/stats/users/*")
 public class DataUserService extends HttpServlet {
-
-    private final Gson gson = new Gson();
-    private final JsonParser jsonParser = new JsonParser();
 
     public DataUserService(){
 
@@ -59,7 +49,6 @@ public class DataUserService extends HttpServlet {
                 resp.getWriter().printf("Admin with sha1 %s does not exists", admin.getEmail());
                 return;
             }
-            String sha1;
 
             switch (parsing[2]) {
                 case "count":
@@ -91,7 +80,7 @@ public class DataUserService extends HttpServlet {
             switch (parsing[2]) {
                 case "contacted-users":
                     if (verifyToken(req, resp, parsing[2])) {
-                        Message message = getMessage(req);
+                        Message message = NetUtils.getMessage(req);
                         JsonObject jsonObject = new Gson().fromJson(message.getData(), JsonObject.class);
                         Admin admin = new Admin(jsonObject.get("admin").getAsString());
                         String sha1 = jsonObject.get("sha1").getAsString();
@@ -140,21 +129,6 @@ public class DataUserService extends HttpServlet {
             return res.getInt("numberAdmin") > 0;
         }
         return false;
-    }
-
-    private Message getMessage(HttpServletRequest request) throws IOException {
-        String requestBody = request.getReader().lines().collect(Collectors.joining("\n"));
-        JsonElement jsonRoot = jsonParser.parse(requestBody);
-        String messageStr = jsonRoot.getAsJsonObject().get("message").toString();
-        Message message = gson.fromJson(messageStr, Message.class);
-        // decode from base64
-        String decoded = decode(message.getData());
-        message.setData(decoded);
-        return message;
-    }
-
-    private String decode(String data) {
-        return new String(Base64.getDecoder().decode(data));
     }
 
     @Override
