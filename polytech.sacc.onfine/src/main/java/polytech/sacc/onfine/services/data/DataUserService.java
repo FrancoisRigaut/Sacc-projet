@@ -239,10 +239,15 @@ public class DataUserService extends HttpServlet {
                             .setFilter(StructuredQuery.PropertyFilter.eq("meeting_sha1", sha1))
                             .build();
             QueryResults<Entity> results = datastore.run(query);
-            List<User> users = new ArrayList<>();
+            List<JsonObject> users = new ArrayList<>();
             while (results.hasNext()) {
                 Entity entity = results.next();
-                users.add(new User(entity.getString("meeting_sha1Met")));
+                JsonObject jsonUser = new JsonObject();
+                jsonUser.addProperty("sha1Met", entity.getString("meeting_sha1Met"));
+                jsonUser.addProperty("latitude", entity.getDouble("meeting_gps_latitude"));
+                jsonUser.addProperty("longitude", entity.getDouble("meeting_gps_longitude"));
+                jsonUser.addProperty("timestamp", entity.getString("meeting_timestamp"));
+                users.add(jsonUser);
             }
 
             NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_OK, users.toString());
