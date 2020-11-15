@@ -102,16 +102,14 @@ public class DataUserService extends HttpServlet {
         try {
             if (req.getParameter("token") != null) {
                 if (req.getParameter("token").compareTo(pubsubVerificationToken) != 0) {
-                    NetUtils.sendErrorMail(topic, "Error: wrong token given in message", new Admin("triagonforce@gmail.com"));
                     NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error: wrong token given in message");
                     return false;
                 }
             } else {
-                NetUtils.sendErrorMail(topic, "Error: missing token in message", new Admin("triagonforce@gmail.com"));
                 NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error: missing token in message");
                 return false;
             }
-        } catch (IOException | MessagingException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             return false;
         }
