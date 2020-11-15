@@ -109,6 +109,8 @@ public class WSUser extends HttpServlet {
         try{
             if(!jsonObject.has("sha1"))
                 throw new MissingArgumentException("sha1");
+            if(!jsonObject.has("timestamp"))
+                throw new MissingArgumentException("timestamp");
 
             UtilsResponse res = Utils.makeRequest(Utils.getCurrentUrl() + requestUrl,
                     jsonObject.toString().getBytes(StandardCharsets.UTF_8),

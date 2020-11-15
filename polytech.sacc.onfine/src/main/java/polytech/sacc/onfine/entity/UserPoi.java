@@ -2,7 +2,7 @@ package polytech.sacc.onfine.entity;
 
 public class UserPoi {
     private String sha1;
-    private String poiDate;
+    private String timestamp;
 
     public UserPoi(){
 
@@ -10,7 +10,7 @@ public class UserPoi {
 
     public UserPoi(String sha1, String poiDate) {
         this.sha1 = sha1;
-        this.poiDate = poiDate;
+        this.timestamp = timestamp;
     }
 
     public String getSha1() {
@@ -21,19 +21,19 @@ public class UserPoi {
         this.sha1 = sha1;
     }
 
-    public String getPoiDate() {
-        return poiDate;
+    public String getTimestamp() {
+        return timestamp;
     }
 
-    public void setPoiDate(String poiDate) {
-        this.poiDate = poiDate;
+    public void setTimestamp(String poiDate) {
+        this.timestamp = timestamp;
     }
 
     @Override
     public String toString() {
         return "UserPoi{" +
                 "sha1='" + sha1 + '\'' +
-                ", poiDate='" + poiDate + '\'' +
+                ", poiDate='" + timestamp + '\'' +
                 '}';
     }
 }

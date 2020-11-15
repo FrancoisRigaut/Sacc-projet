@@ -60,13 +60,13 @@ public class MeetingService extends HttpServlet {
     private void handleRegisterMeeting(HttpServletRequest req, HttpServletResponse resp) throws IOException{
         Meeting meeting = (Meeting) NetUtils.getGsonEntity(req, Meeting.class);
 
-        if(!UserService.isUserExisting(new User(meeting.getSha1()))){
+        if(!UserService.isUserExisting(meeting.getSha1())){
             resp.setStatus(HttpServletResponse.SC_CONFLICT);
             System.out.printf("User with sha1 %s does not exists\n", meeting.getSha1());
             resp.getWriter().printf("User with sha1 %s does not exists", meeting.getSha1());
             return;
         }
-        if(!UserService.isUserExisting(new User(meeting.getSha1Met()))){
+        if(!UserService.isUserExisting(meeting.getSha1Met())){
             resp.setStatus(HttpServletResponse.SC_CONFLICT);
             System.out.printf("User with sha1 %s does not exists\n", meeting.getSha1Met());
             resp.getWriter().printf("User with sha1 %s does not exists", meeting.getSha1Met());

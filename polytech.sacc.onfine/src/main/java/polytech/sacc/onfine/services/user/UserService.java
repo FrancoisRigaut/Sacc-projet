@@ -4,6 +4,7 @@ import com.google.appengine.repackaged.com.google.gson.Gson;
 import com.google.appengine.repackaged.com.google.gson.JsonObject;
 import com.google.cloud.datastore.*;
 import org.apache.commons.codec.digest.DigestUtils;
+import polytech.sacc.onfine.entity.UserPoi;
 import polytech.sacc.onfine.tools.Utils;
 import polytech.sacc.onfine.entity.User;
 import polytech.sacc.onfine.entity.exception.WrongArgumentException;
@@ -21,6 +22,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -109,9 +111,9 @@ public class UserService extends HttpServlet {
         resp.getWriter().printf("User registered, sha1 : %s", task.getKey().getName());
     }
 
-    public static boolean isUserExisting(User user){
+    public static boolean isUserExisting(String sha1){
         Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
-        Key taskKey = datastore.newKeyFactory().setKind("User").newKey(user.getSha1());
+        Key taskKey = datastore.newKeyFactory().setKind("User").newKey(sha1);
         try {
             Entity entity = datastore.get(taskKey);
             return entity != null;
@@ -122,8 +124,8 @@ public class UserService extends HttpServlet {
     }
 
     private void handleSetPoiUser(HttpServletRequest req, HttpServletResponse resp) throws IOException, SQLException {
-        User userEntity = (User)NetUtils.getGsonEntity(req, User.class);
-        if(!isUserExisting(userEntity)){
+        UserPoi userEntity = (UserPoi) NetUtils.getGsonEntity(req, UserPoi.class);
+        if(!isUserExisting(userEntity.getSha1())){
             resp.setStatus(HttpServletResponse.SC_CONFLICT);
             System.out.printf("User with sha1 %s does not exists\n", userEntity.getSha1());
             resp.getWriter().printf("User with sha1 %s does not exists", userEntity.getSha1());
@@ -146,8 +148,8 @@ public class UserService extends HttpServlet {
         }
         SqlUtils.sqlReqAndRespBool(
                 req,
-                "INSERT INTO user_poi VALUES(?)",
-                Collections.singletonList(userEntity.getSha1()),
+                "INSERT INTO user_poi(sha1, poi_time) VALUES(?,?)",
+                Arrays.asList(userEntity.getSha1(), userEntity.getTimestamp()),
                 resp
         );
         resp.setStatus(HttpServletResponse.SC_CREATED);
@@ -176,9 +178,9 @@ public class UserService extends HttpServlet {
         Connection conn = pool.getConnection();
         PreparedStatement statement = conn.prepareStatement("SELECT * FROM user_poi");
         ResultSet res = statement.executeQuery();
-        List<User> users = new ArrayList<>();
+        List<UserPoi> users = new ArrayList<>();
         while(res.next()){
-            users.add(new User(res.getString("sha1")));
+            users.add(new UserPoi(res.getString("sha1"), res.getString("poi_time")));
         }
         resp.setStatus(HttpServletResponse.SC_OK);
         resp.getWriter().printf(new Gson().toJson(users));
