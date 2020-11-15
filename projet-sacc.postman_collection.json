@@ -387,7 +387,7 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "https://sacc-onfine.ew.r.appspot.com/ws/stats/users/count-position-updates?admin=admin@mail.fr&sha1=085b8e735b958c8dbdf9f5d7177d12a022275cdc",
+							"raw": "https://sacc-onfine.ew.r.appspot.com/ws/stats/users/count-position-updates?admin=admin@mail.fr",
 							"protocol": "https",
 							"host": [
 								"sacc-onfine",
@@ -406,10 +406,45 @@
 								{
 									"key": "admin",
 									"value": "admin@mail.fr"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Users contacted by",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "https://sacc-onfine.ew.r.appspot.com/ws/stats/users/contacted-users?admin=admin@mail.fr&sha1=503376e448b79406decbbc1e8bd1e175ca1c1b19",
+							"protocol": "https",
+							"host": [
+								"sacc-onfine",
+								"ew",
+								"r",
+								"appspot",
+								"com"
+							],
+							"path": [
+								"ws",
+								"stats",
+								"users",
+								"contacted-users"
+							],
+							"query": [
+								{
+									"key": "admin",
+									"value": "admin@mail.fr"
 								},
 								{
 									"key": "sha1",
-									"value": "085b8e735b958c8dbdf9f5d7177d12a022275cdc"
+									"value": "503376e448b79406decbbc1e8bd1e175ca1c1b19"
 								}
 							]
 						}
