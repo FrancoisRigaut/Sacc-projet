@@ -29,8 +29,8 @@ public class ConnectionPoolContextListener implements ServletContextListener {
         config.setPassword(DB_PASS); // e.g. "my-password"
         config.addDataSourceProperty("socketFactory", "com.google.cloud.sql.postgres.SocketFactory");
         config.addDataSourceProperty("cloudSqlInstance", CLOUD_SQL_CONNECTION_NAME);
-        config.setMaximumPoolSize(100); // maximumPoolSize limits the total number of concurrent connections this pool will keep
-        config.setMinimumIdle(10); // minimumIdle is the minimum number of idle connections Hikari maintains in the poo
+        config.setMaximumPoolSize(10000); // maximumPoolSize limits the total number of concurrent connections this pool will keep
+        config.setMinimumIdle(10); // minimumIdle is the minimum number of idle connections Hikari maintains in the pool
         config.setConnectionTimeout(10000); // 10 seconds - setConnectionTimeout is the maximum number of milliseconds to wait for a connection checkout
         config.setIdleTimeout(30000); // 5 minutes - idleTimeout is the maximum amount of time a connection can sit in the pool. Connections that sit idle for this many milliseconds are retried if minimumIdle is exceeded.
         config.setMaxLifetime(60000); // 10 minutes - maxLifetime is the maximum possible lifetime of a connection in the pool.
