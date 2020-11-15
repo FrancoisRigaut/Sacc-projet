@@ -36,7 +36,7 @@ public class WSDataServiceUser extends HttpServlet {
                     handleFastStatsCalculation(resp, "/" + requestURL + "?" + req.getQueryString());
                     break;
                 case "count-position-updates":
-                case "contacted-poi":
+                case "contacted-users":
                     handleLongStatsCalculation(req, resp, parsing[2]);
                     break;
                 default:

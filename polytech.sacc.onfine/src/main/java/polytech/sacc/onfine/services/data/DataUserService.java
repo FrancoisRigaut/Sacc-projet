@@ -86,13 +86,13 @@ public class DataUserService extends HttpServlet {
 
         try {
             switch (parsing[2]) {
-                case "contacted-poi":
+                case "contacted-users":
                     if (verifyToken(req, resp, parsing[2])) {
                         Message message = getMessage(req);
                         JsonObject jsonObject = new Gson().fromJson(message.getData(), JsonObject.class);
                         Admin admin = new Admin(jsonObject.get("admin").getAsString());
                         String sha1 = jsonObject.get("sha1").getAsString();
-                        handleContactedPoi(resp, admin, sha1);
+                        handleContactedUsers(resp, admin, sha1);
                     }
                     break;
             }
@@ -253,7 +253,7 @@ public class DataUserService extends HttpServlet {
         }
     }
 
-    private void handleContactedPoi(HttpServletResponse resp, Admin loggedAdmin, String sha1) throws IOException {
+    private void handleContactedUsers(HttpServletResponse resp, Admin loggedAdmin, String sha1) throws IOException {
         try {
             Datastore datastore = DatastoreOptions.getDefaultInstance().getService();
 
@@ -270,11 +270,11 @@ public class DataUserService extends HttpServlet {
             }
 
             NetUtils.sendResponseWithCode(resp, HttpServletResponse.SC_OK, users.toString());
-            NetUtils.sendResultMail("List of users contacted by PoI: " + sha1, users.toString(), loggedAdmin);
+            NetUtils.sendResultMail("List of users contacted by user: " + sha1, users.toString(), loggedAdmin);
         } catch (Exception e) {
             NetUtils.sendResponseWithCode(resp,
                     HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    "Error when getting list of contacted PoI: " + e.getMessage()
+                    "Error when getting list of contacted user: " + e.getMessage()
             );
         }
     }
