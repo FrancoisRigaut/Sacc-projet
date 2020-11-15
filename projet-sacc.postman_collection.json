@@ -57,12 +57,15 @@
 							"raw": "{\r\n    \"email\": \"admin@mail.fr\"\r\n}"
 						},
 						"url": {
-							"raw": "http://localhost:8080/ws/admin/register",
-							"protocol": "http",
+							"raw": "https://sacc-onfine.ew.r.appspot.com/ws/admin/register",
+							"protocol": "https",
 							"host": [
-								"localhost"
+								"sacc-onfine",
+								"ew",
+								"r",
+								"appspot",
+								"com"
 							],
-							"port": "8080",
 							"path": [
 								"ws",
 								"admin",
@@ -73,7 +76,7 @@
 					"response": []
 				},
 				{
-					"name": "Find Admin",
+					"name": "Find Admins",
 					"request": {
 						"method": "GET",
 						"header": [],
@@ -82,15 +85,46 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "http://localhost:8080/ws/admin/find-all",
-							"protocol": "http",
+							"raw": "https://sacc-onfine.ew.r.appspot.com/ws/admin/find-all",
+							"protocol": "https",
 							"host": [
-								"localhost"
+								"sacc-onfine",
+								"ew",
+								"r",
+								"appspot",
+								"com"
 							],
-							"port": "8080",
 							"path": [
 								"ws",
 								"admin",
+								"find-all"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find Users",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "https://sacc-onfine.ew.r.appspot.com/ws/user/find-all",
+							"protocol": "https",
+							"host": [
+								"sacc-onfine",
+								"ew",
+								"r",
+								"appspot",
+								"com"
+							],
+							"path": [
+								"ws",
+								"user",
 								"find-all"
 							]
 						}
@@ -116,19 +150,50 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"sha1\" : \"019b83c22334c532aebdd162f011e7e63dfb00c4\"\r\n}"
+							"raw": "{\r\n    \"sha1\" : \"503376e448b79406decbbc1e8bd1e175ca1c1b19\"\r\n}"
 						},
 						"url": {
-							"raw": "http://localhost:8080/ws/user/set-poi",
-							"protocol": "http",
+							"raw": "https://sacc-onfine.ew.r.appspot.com/ws/user/set-poi",
+							"protocol": "https",
 							"host": [
-								"localhost"
+								"sacc-onfine",
+								"ew",
+								"r",
+								"appspot",
+								"com"
 							],
-							"port": "8080",
 							"path": [
 								"ws",
 								"user",
 								"set-poi"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find all PoI",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "https://sacc-onfine.ew.r.appspot.com/ws/user/find-all-poi",
+							"protocol": "https",
+							"host": [
+								"sacc-onfine",
+								"ew",
+								"r",
+								"appspot",
+								"com"
+							],
+							"path": [
+								"ws",
+								"user",
+								"find-all-poi"
 							]
 						}
 					},
@@ -153,15 +218,18 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"sha1\" : \"085b8e735b958c8dbdf9f5d7177d12a022275cdc\",\r\n    \"sha1Met\": \"69064a0879f134e6ba1783618e9059b8d530c7ed\",\r\n    \"timestamp\": \"1604667129\",\r\n    \"gps\" : {\r\n        \"latitude\": 43.6224479675293,\r\n        \"longitude\" : 7.072978496551514\r\n    } \r\n}"
+							"raw": "{\r\n    \"sha1\" : \"503376e448b79406decbbc1e8bd1e175ca1c1b19\",\r\n    \"sha1Met\": \"76ad44c22b7f190056230cc3a481b845f3a2b2a3\",\r\n    \"timestamp\": \"1604667129\",\r\n    \"gps\" : {\r\n        \"latitude\": 43.6224479675293,\r\n        \"longitude\" : 7.072978496551514\r\n    } \r\n}"
 						},
 						"url": {
-							"raw": "http://localhost:8080/ws/meeting/register",
-							"protocol": "http",
+							"raw": "https://sacc-onfine.ew.r.appspot.com/ws/meeting/register",
+							"protocol": "https",
 							"host": [
-								"localhost"
+								"sacc-onfine",
+								"ew",
+								"r",
+								"appspot",
+								"com"
 							],
-							"port": "8080",
 							"path": [
 								"ws",
 								"meeting",
@@ -185,19 +253,50 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\r\n    \"sha1\" : \"69064a0879f134e6ba1783618e9059b8d530c7ed\",\r\n    \"sha1Met\": \"085b8e735b958c8dbdf9f5d7177d12a022275cdc\",\r\n    \"timestamp\": \"1604667130\",\r\n    \"gps\" : {\r\n        \"latitude\": 43.6224479675294,\r\n        \"longitude\" : 7.072978496551516\r\n    }  \r\n}"
+							"raw": "{\r\n    \"sha1\" : \"76ad44c22b7f190056230cc3a481b845f3a2b2a3\",\r\n    \"sha1Met\": \"503376e448b79406decbbc1e8bd1e175ca1c1b19\",\r\n    \"timestamp\": \"1604667130\",\r\n    \"gps\" : {\r\n        \"latitude\": 43.6224479675294,\r\n        \"longitude\" : 7.072978496551516\r\n    }  \r\n}"
 						},
 						"url": {
-							"raw": "http://localhost:8080/ws/meeting/register",
-							"protocol": "http",
+							"raw": "https://sacc-onfine.ew.r.appspot.com/ws/meeting/register",
+							"protocol": "https",
 							"host": [
-								"localhost"
+								"sacc-onfine",
+								"ew",
+								"r",
+								"appspot",
+								"com"
 							],
-							"port": "8080",
 							"path": [
 								"ws",
 								"meeting",
 								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Find all Meet",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "https://sacc-onfine.ew.r.appspot.com/ws/meeting/find-all",
+							"protocol": "https",
+							"host": [
+								"sacc-onfine",
+								"ew",
+								"r",
+								"appspot",
+								"com"
+							],
+							"path": [
+								"ws",
+								"meeting",
+								"find-all"
 							]
 						}
 					},
@@ -218,12 +317,15 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "http://localhost:8080/ws/stats/users/count?admin=admin@mail.fr",
-							"protocol": "http",
+							"raw": "https://sacc-onfine.ew.r.appspot.com/ws/stats/users/count?admin=admin@mail.fr",
+							"protocol": "https",
 							"host": [
-								"localhost"
+								"sacc-onfine",
+								"ew",
+								"r",
+								"appspot",
+								"com"
 							],
-							"port": "8080",
 							"path": [
 								"ws",
 								"stats",
@@ -250,12 +352,15 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "http://localhost:8080/ws/stats/users/count-poi?admin=admin@mail.fr",
-							"protocol": "http",
+							"raw": "https://sacc-onfine.ew.r.appspot.com/ws/stats/users/count-poi?admin=admin@mail.fr",
+							"protocol": "https",
 							"host": [
-								"localhost"
+								"sacc-onfine",
+								"ew",
+								"r",
+								"appspot",
+								"com"
 							],
-							"port": "8080",
 							"path": [
 								"ws",
 								"stats",
@@ -282,12 +387,15 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": "http://localhost:8080/ws/stats/users/count-position-updates?admin=admin@mail.fr&sha1=085b8e735b958c8dbdf9f5d7177d12a022275cdc",
-							"protocol": "http",
+							"raw": "https://sacc-onfine.ew.r.appspot.com/ws/stats/users/count-position-updates?admin=admin@mail.fr&sha1=085b8e735b958c8dbdf9f5d7177d12a022275cdc",
+							"protocol": "https",
 							"host": [
-								"localhost"
+								"sacc-onfine",
+								"ew",
+								"r",
+								"appspot",
+								"com"
 							],
-							"port": "8080",
 							"path": [
 								"ws",
 								"stats",
@@ -323,7 +431,21 @@
 							"raw": ""
 						},
 						"url": {
-							"raw": ""
+							"raw": "https://sacc-onfine.ew.r.appspot.com/ws/stats/users/delete-all",
+							"protocol": "https",
+							"host": [
+								"sacc-onfine",
+								"ew",
+								"r",
+								"appspot",
+								"com"
+							],
+							"path": [
+								"ws",
+								"stats",
+								"users",
+								"delete-all"
+							]
 						}
 					},
 					"response": []
