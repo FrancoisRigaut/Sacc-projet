@@ -10,7 +10,7 @@
 
 # Using project
 
-//TODO describe to prof ce qu'il faut faire
+Everything you need to know is in the deliverables folder.
 
 # Create and manage Google Cloud Project
 
